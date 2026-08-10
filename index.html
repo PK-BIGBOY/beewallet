@@ -478,6 +478,7 @@
   .navbtn.active{ color: var(--honey-light); }
   .navbtn.active .icon{ background: linear-gradient(155deg, var(--honey-light), var(--honey-deep)); }
 </style>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
 </head>
 <body>
 
@@ -816,7 +817,7 @@
 const API_URL = 'https://script.google.com/macros/s/AKfycbwSorncI56ri9a4e2viLTwtNNOyIPvKhd--nqG1_ADTqi0O-wE2QXWl62N-LrYTbLlltg/exec';
 const BOT_USERNAME = 'beewalletmicrotask_bot';
 
-let state = { user: {}, tasks: [], honeyPerTaka: 1, referralBonus: null };
+let state = { user: {}, tasks: [], honeyPerTaka: 1, referralBonus: null, depositBkashNumber: '' };
 let currentTask = null;
 let currentPlatform = null;
 let ptSelectedPlatform = null;
@@ -894,6 +895,20 @@ function esc(v){
 }
 
 function money(v){ return Number(v || 0).toFixed(2); }
+function copyText(id){
+  const el = document.getElementById(id);
+  if (!el) return;
+  const value = ('value' in el) ? el.value : el.textContent;
+  if (navigator.clipboard) {
+    navigator.clipboard.writeText(value);
+  } else {
+    el.select();
+    document.execCommand('copy');
+  }
+  alert('✅ Copied');
+}
+
+
 
 function errorText(e){
   const m = String(e && e.message || e);
@@ -918,10 +933,12 @@ function applyState(data){
     user: data.user || {},
     tasks: Array.isArray(data.tasks) ? data.tasks : [],
     honeyPerTaka: Number(data.honeyPerTaka || 1),
-    referralBonus: (data.referralBonus == null ? null : Number(data.referralBonus))
+    referralBonus: (data.referralBonus == null ? null : Number(data.referralBonus)),
+    depositBkashNumber: String(data.depositBkashNumber || '').trim()
   };
   updateWalletUI();
   updateReferralUI();
+  updateDepositReceiverUI();
   renderPlatformGrid();
 }
 
@@ -932,7 +949,11 @@ function updateReferralUI(){
   const countEl = document.getElementById('ref-count-value');
   const earnedEl = document.getElementById('ref-earned-value');
   const linkEl = document.getElementById('referral-link');
-  if (bonusText) bonusText.textContent = Number.isFinite(bonus) ? ('+' + money(bonus).replace(/\.00$/, '') + ' honey') : 'Loading...';
+  if (bonusText) {
+    bonusText.textContent = Number.isFinite(bonus) && bonus >= 0
+      ? ('+' + money(bonus).replace(/\.00$/, '') + ' honey')
+      : 'Not configured';
+  }
   if (countEl) countEl.textContent = String(count);
   if (earnedEl) earnedEl.textContent = Number.isFinite(bonus) ? money(count * bonus) : '—';
   const histRef = document.getElementById('history-ref-bonus');
@@ -940,6 +961,7 @@ function updateReferralUI(){
   const tgUser = getTelegramUser();
   const referralUserId = state.user.user_id || tgUser.id || '';
   if (linkEl && referralUserId) {
+    // Main Mini App direct link. Telegram exposes the value as start_param.
     linkEl.value = 'https://t.me/' + BOT_USERNAME + '?startapp=' + encodeURIComponent(referralUserId);
   }
 }
@@ -953,14 +975,9 @@ function getTelegramUser(){
 function getDisplayName(){
   const user = state.user || {};
   const tgUser = getTelegramUser();
-  return (
-    user.full_name ||
-    [user.first_name, user.last_name].filter(Boolean).join(' ') ||
-    tgUser.first_name && [tgUser.first_name, tgUser.last_name].filter(Boolean).join(' ') ||
-    user.username ||
-    tgUser.username ||
-    'User'
-  );
+  const tgFullName = [tgUser.first_name, tgUser.last_name].filter(Boolean).join(' ');
+  const backendName = [user.first_name, user.last_name].filter(Boolean).join(' ');
+  return user.full_name || backendName || tgFullName || user.username || tgUser.username || 'User';
 }
 
 function updateWalletUI(){
@@ -992,6 +1009,12 @@ function updateWalletUI(){
   updateWithdrawConvert();
 }
 
+function updateDepositReceiverUI(){
+  const el = document.getElementById('dep-address');
+  if (!el) return;
+  el.textContent = state.depositBkashNumber || 'bKash number not configured';
+}
+
 function updateDepositConvert(){
   const taka = Number(document.getElementById('dep-amount').value) || 0;
   const el = document.getElementById('dep-convert');
@@ -1005,6 +1028,10 @@ function updateWithdrawConvert(){
 }
 
 async function submitDeposit(){
+  if (!state.depositBkashNumber){
+    alert('Admin-এর bKash number এখনো Config sheet-এ set করা হয়নি।');
+    return;
+  }
   const amount = Number(document.getElementById('dep-amount').value) || 0;
   const txid = document.getElementById('dep-txid').value.trim();
   const sender = document.getElementById('dep-sender').value.trim();
@@ -1067,9 +1094,258 @@ async function refreshState(){
   }
 }
 
+
+const PLATFORM_META = {
+  ads:{name:'Ads', mono:'AD', icon:'📺'},
+  telegram:{name:'Telegram', mono:'TG', icon:'📢'},
+  facebook:{name:'Facebook', mono:'FB', icon:'f'},
+  instagram:{name:'Instagram', mono:'IG', icon:'◎'},
+  tiktok:{name:'TikTok', mono:'TT', icon:'♪'},
+  youtube:{name:'YouTube', mono:'YT', icon:'▶'},
+  gmail:{name:'Gmail', mono:'G', icon:'✉'},
+  whatsapp:{name:'WhatsApp', mono:'WA', icon:'◉'},
+  x:{name:'X', mono:'X', icon:'𝕏'},
+  discord:{name:'Discord', mono:'DC', icon:'🎮'},
+  linkedin:{name:'LinkedIn', mono:'in', icon:'in'},
+  snapchat:{name:'Snapchat', mono:'SC', icon:'👻'},
+  other:{name:'Other', mono:'OT', icon:'•'}
+};
+
+function platformKey(v){
+  const x=String(v||'').trim().toLowerCase();
+  if (x==='instagram' || x==='ig') return 'instagram';
+  if (x==='facebook' || x==='fb') return 'facebook';
+  if (x==='tiktok' || x==='tik tok') return 'tiktok';
+  if (x==='youtube' || x==='yt') return 'youtube';
+  if (x==='telegram' || x==='tg') return 'telegram';
+  if (x==='whatsapp' || x==='wa') return 'whatsapp';
+  if (x==='linkedin') return 'linkedin';
+  if (x==='snapchat') return 'snapchat';
+  if (x==='discord') return 'discord';
+  if (x==='gmail') return 'gmail';
+  if (x==='twitter' || x==='x') return 'x';
+  if (x==='ads' || x==='ad') return 'ads';
+  return x || 'other';
+}
+
+function platformLabel(key){
+  return (PLATFORM_META[key] || {name:key || 'Other',mono:'OT',icon:'•'}).name;
+}
+
+function groupedTasks(){
+  const groups={};
+  (state.tasks||[]).forEach(function(t){
+    const key=platformKey(t.platform);
+    if(!groups[key]) groups[key]=[];
+    groups[key].push(t);
+  });
+  return groups;
+}
+
+function adsTasks(){
+  return (state.tasks||[]).filter(function(t){ return platformKey(t.platform)==='ads'; });
+}
+
+function adsFullyDone(){
+  const a=adsTasks();
+  return a.length>=3 && a.filter(function(t){return t.completed;}).length>=3;
+}
+
+function renderPlatformGrid(){
+  const grid=document.getElementById('platform-grid');
+  if(!grid) return;
+  grid.innerHTML='';
+  const groups=groupedTasks();
+  const ads=groups.ads||[];
+  const adsDone=ads.filter(function(t){return t.completed;}).length;
+  const unlocked=ads.length>=3 && adsDone>=3;
+
+  const keys=['ads','telegram','facebook','instagram','tiktok','youtube','gmail','whatsapp','x','discord','linkedin','snapchat','other'];
+  const present=Object.keys(groups).filter(function(k){return keys.indexOf(k)===-1;});
+  keys.concat(present).forEach(function(key){
+    const list=groups[key]||[];
+    if(!list.length) return;
+    const locked=key==='ads' ? unlocked : !unlocked;
+    const meta=PLATFORM_META[key]||{name:key,mono:'OT',icon:'•'};
+    const done=list.filter(function(t){return t.completed;}).length;
+    const card=document.createElement('div');
+    card.className='platform-card'+(locked?' locked':'');
+    card.onclick=function(){
+      if(locked){
+        alert(key==='ads'
+          ? '🔒 আজকের ৩টা Ads শেষ। ২৪ ঘণ্টা পর আবার Ads খুলবে।'
+          : '🔒 আগে Ads-এর ৩টা task complete করো।');
+        return;
+      }
+      openPlatform(key);
+    };
+    card.innerHTML='<div class="p-hex">'+(locked?'🔒':esc(meta.mono))+'</div>'+
+      '<div class="p-name">'+esc(meta.name)+'</div>'+
+      '<div class="p-count">'+(locked?'Locked':(done+'/'+list.length))+'</div>';
+    grid.appendChild(card);
+  });
+
+  const banner=document.getElementById('lock-banner');
+  if(banner) banner.textContent=unlocked
+    ? '✅ Ads-এর ৩টা complete — বাকি সব task unlock। Ads ২৪ ঘণ্টা পর আবার খুলবে।'
+    : '🔒 আগে Ads-এর ৩টা task complete করো — তারপর Facebook, Instagram, Telegramসহ বাকি task unlock হবে।';
+}
+
+function openPlatform(key){
+  const list=(groupedTasks()[key]||[]);
+  if(!list.length) return;
+  const adsDone=adsFullyDone();
+  if(key==='ads' && adsDone){
+    alert('🔒 আজকের Ads শেষ। ২৪ ঘণ্টা পর আবার Ads খুলবে।');
+    return;
+  }
+  if(key!=='ads' && !adsDone){
+    alert('🔒 আগে Ads-এর ৩টা task complete করো।');
+    return;
+  }
+  currentPlatform=key;
+  const title=document.getElementById('platform-detail-title');
+  if(title) title.textContent=platformLabel(key);
+  renderTaskList(list,key);
+  document.getElementById('platform-grid-view').style.display='none';
+  document.getElementById('platform-detail-view').style.display='block';
+}
+
+function closePlatform(){
+  document.getElementById('platform-detail-view').style.display='none';
+  document.getElementById('platform-grid-view').style.display='block';
+  renderPlatformGrid();
+}
+
+function renderTaskList(list,key){
+  const wrap=document.getElementById('platform-task-list');
+  if(!wrap) return;
+  wrap.innerHTML='';
+  const isAds=key==='ads';
+  const isTelegram=key==='telegram';
+
+  list.forEach(function(t,idx){
+    const card=document.createElement('div');
+    card.className='task-card';
+    const reward=isAds
+      ? '<div class="pts" style="color:var(--text-muted);">👁️ শুধু view গণনা হবে — honey নেই</div>'
+      : '<div class="pts">+'+Number(t.points||t.reward_honey||0)+' honey</div>';
+
+    let action='';
+    if(t.completed){
+      action='<button class="claim-btn disabled">Done</button>';
+    }else if(t.pending){
+      action='<button class="claim-btn disabled" style="color:var(--honey);border-color:var(--honey);">Pending</button>';
+    }else if(isAds){
+      action='<button class="claim-btn">Watch</button>';
+    }else if(isTelegram){
+      action='<button class="claim-btn">Verify</button>';
+    }else{
+      action='<button class="claim-btn">'+(t.userPosted?'Details':'Claim')+'</button>';
+    }
+
+    card.innerHTML='<div class="task-hex">'+(t.completed?'✓':'•')+'</div>'+
+      '<div class="task-body"><div class="title">'+esc(t.title||'Task')+'</div>'+
+      '<div class="desc">'+esc(t.description||t.target||'Task complete করো')+'</div>'+reward+'</div>'+action;
+
+    const btn=card.querySelector('button');
+    if(btn && !t.completed && !t.pending){
+      btn.onclick=function(){
+        if(isAds) watchAd(t);
+        else if(isTelegram) verifyTelegramTask(t);
+        else if(t.userPosted) openTaskDetail(t);
+        else claimBuiltInTask(t);
+      };
+    }
+    wrap.appendChild(card);
+  });
+}
+
+async function claimBuiltInTask(t){
+  try{
+    const data=await api('claim_task',{taskId:t.task_id});
+    if(data.user) state.user=Object.assign(state.user,data.user);
+    await refreshState();
+    alert('✅ Task complete হয়েছে।');
+  }catch(e){alert(errorText(e));}
+}
+
+async function watchAd(t){
+  window.open(t.target || 'about:blank','_blank');
+  try{
+    const data=await api('claim_task',{taskId:t.task_id});
+    if(data.user) state.user=Object.assign(state.user,data.user);
+    await refreshState();
+  }catch(e){alert(errorText(e));}
+}
+
+async function verifyTelegramTask(t){
+  try{
+    const data=await api('claim_task',{taskId:t.task_id});
+    if(data.user) state.user=Object.assign(state.user,data.user);
+    await refreshState();
+    alert('✅ Telegram task verified।');
+  }catch(e){alert(errorText(e));}
+}
+
+function openTaskDetail(t){
+  const title=document.getElementById('td-title');
+  const sub=document.getElementById('td-sub');
+  const reward=document.getElementById('td-reward');
+  const desc=document.getElementById('td-desc');
+  const shot=document.getElementById('td-screenshot');
+  if(title) title.textContent=t.title||'Task';
+  if(sub) sub.textContent=platformLabel(platformKey(t.platform));
+  if(reward) reward.textContent='+'+Number(t.points||t.reward_honey||0)+' honey';
+  if(desc) desc.value='';
+  if(shot) shot.value='';
+  const steps=document.getElementById('td-steps');
+  if(steps){
+    steps.innerHTML='';
+    if(t.target){
+      const a=document.createElement('a');
+      a.href=t.target;a.target='_blank';a.rel='noopener';
+      a.textContent='🔗 Task link খুলে কাজটি করো';
+      steps.appendChild(a);
+    }
+    const d=document.createElement('div');
+    d.textContent=t.description||'Task instructions follow করো এবং নিচে proof/description জমা দাও।';
+    steps.appendChild(d);
+  }
+  window.currentTaskForProof=t;
+  showScreen('taskdetail');
+}
+
+async function submitTaskProof(){
+  const t=window.currentTaskForProof;
+  if(!t) return;
+  const descEl=document.getElementById('td-desc');
+  const desc=(descEl?descEl.value:'').trim();
+  if(!desc){alert('আগে Description লিখো।');return;}
+  try{
+    await api('submit_task_proof',{taskId:t.task_id,description:desc});
+    alert('✅ Submission task owner-এর কাছে পাঠানো হয়েছে।');
+    window.currentTaskForProof=null;
+    await refreshState();
+    showScreen('tasks');
+  }catch(e){alert(errorText(e));}
+}
+
+function closeTaskDetail(){
+  window.currentTaskForProof=null;
+  showScreen('tasks');
+}
+
 async function startApp(){
   if (!initData()){
-    alert('এই app-টি Telegram Mini App হিসেবে খুলতে হবে।');
+    // Do not show a blocking "open in Telegram" page.
+    // Send direct browser visitors to the bot's Mini App deep link.
+    const miniAppUrl = 'https://t.me/' + BOT_USERNAME + '?startapp=app';
+    try {
+      window.location.replace(miniAppUrl);
+    } catch(e) {
+      window.location.href = miniAppUrl;
+    }
     return;
   }
   await refreshState();
