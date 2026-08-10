@@ -1,0 +1,1517 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bee Wallet — Design Demo</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Manrope:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg: #1a130c;
+    --bg-soft: #221a10;
+    --card: #2a2013;
+    --card-border: #40311d;
+    --honey: #f2a93c;
+    --honey-deep: #d9862a;
+    --honey-light: #ffda85;
+    --text: #f7ecd9;
+    --text-muted: #a8967d;
+    --sage: #8fb97e;
+    --coral: #e07a5f;
+  }
+  *{ box-sizing:border-box; margin:0; padding:0; }
+  html,body{ height:100%; }
+  body{
+    background: var(--bg);
+    color: var(--text);
+    font-family:'Manrope', -apple-system, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  .app{
+    width:100%; min-height:100vh; min-height:100dvh;
+    display:flex; flex-direction:column;
+    background:
+      radial-gradient(ellipse at top, rgba(242,169,60,0.08), transparent 60%),
+      var(--bg);
+    position:relative;
+    overflow-x:hidden;
+  }
+
+  /* subtle honeycomb texture */
+  .app::before{
+    content:'';
+    position:absolute; inset:0;
+    opacity:0.05;
+    pointer-events:none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='56' height='96' viewBox='0 0 56 96'%3E%3Cpath d='M28 0 L56 16 L56 48 L28 64 L0 48 L0 16 Z' fill='none' stroke='%23f2a93c' stroke-width='1'/%3E%3Cpath d='M28 32 L56 48 L56 80 L28 96 L0 80 L0 48 Z' fill='none' stroke='%23f2a93c' stroke-width='1'/%3E%3C/svg%3E");
+  }
+
+  .topbar{
+    display:flex; align-items:center; justify-content:space-between;
+    padding:20px 20px 8px;
+    position:relative; z-index:1;
+  }
+  .brand{ display:flex; align-items:center; gap:10px; }
+  .brand .hex{
+    width:34px; height:34px;
+    background: linear-gradient(155deg, var(--honey-light), var(--honey-deep));
+    clip-path: polygon(25% 6%, 75% 6%, 100% 50%, 75% 94%, 25% 94%, 0% 50%);
+    display:flex; align-items:center; justify-content:center;
+    font-size:16px;
+  }
+  .brand h1{
+    font-family:'Fraunces', serif; font-weight:600; font-size:18px;
+    letter-spacing:0.2px;
+  }
+  .brand .sub{ font-size:11px; color:var(--text-muted); margin-top:1px; }
+
+  main{ flex:1; padding:8px 20px 90px; position:relative; z-index:1; }
+  .screen{ display:none; animation: fade .25s ease; }
+  .screen.active{ display:block; }
+  @keyframes fade{ from{ opacity:0; transform:translateY(6px);} to{opacity:1; transform:none;} }
+
+  /* ===== balance card ===== */
+  .balance-card{
+    margin-top:14px;
+    padding:26px 22px;
+    border-radius:20px;
+    background: linear-gradient(165deg, #332612, #241a10);
+    border:1px solid var(--card-border);
+    position:relative;
+    overflow:hidden;
+  }
+  .balance-card .hexdeco{
+    position:absolute; top:-30px; right:-30px; width:140px; height:140px;
+    opacity:0.35;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='56' height='96' viewBox='0 0 56 96'%3E%3Cpath d='M28 0 L56 16 L56 48 L28 64 L0 48 L0 16 Z' fill='none' stroke='%23f2a93c' stroke-width='1.4'/%3E%3C/svg%3E");
+    background-repeat:repeat;
+  }
+  .balance-card .label{
+    font-size:12px; letter-spacing:0.08em; text-transform:uppercase;
+    color:var(--honey-light); font-weight:700;
+  }
+  .balance-card .amount{
+    font-family:'Fraunces', serif; font-weight:700;
+    font-size:44px; line-height:1.1; margin:10px 0 2px;
+    color:var(--text);
+  }
+  .balance-card .amount .unit{
+    font-family:'Manrope',sans-serif; font-size:14px; font-weight:600;
+    color:var(--text-muted); margin-left:6px;
+  }
+  .btn-row{ display:flex; gap:8px; margin-top:18px; position:relative; }
+  .btn-primary, .btn-secondary, .btn-tertiary{
+    flex:1; border:none; padding:13px 6px; border-radius:13px;
+    font-weight:700; font-size:12.5px; font-family:'Manrope',sans-serif;
+    cursor:pointer; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:3px;
+    transition: transform .15s ease, filter .15s ease;
+  }
+  .btn-primary .ic, .btn-secondary .ic, .btn-tertiary .ic{ font-size:15px; }
+  .btn-primary{ background: linear-gradient(155deg, var(--honey-light), var(--honey-deep)); color:#241a08; }
+  .btn-secondary{ background:rgba(255,255,255,0.06); color:var(--text); border:1px solid var(--card-border); }
+  .btn-tertiary{ background:rgba(255,255,255,0.06); color:var(--text); border:1px solid var(--card-border); }
+  .btn-primary:active, .btn-secondary:active, .btn-tertiary:active{ transform: scale(0.96); }
+
+  /* ===== section titles ===== */
+  .section-title{
+    font-family:'Fraunces', serif; font-weight:600; font-size:16px;
+    margin:26px 0 12px; display:flex; align-items:baseline; gap:8px;
+  }
+  .section-title .eyebrow{
+    font-family:'IBM Plex Mono', monospace; font-size:10.5px; color:var(--honey);
+    letter-spacing:0.08em; text-transform:uppercase;
+  }
+  .tasks-header{
+    display:flex; align-items:center; justify-content:space-between;
+    margin:26px 0 12px;
+  }
+  .post-task-btn{
+    background: linear-gradient(155deg, var(--honey-light), var(--honey-deep));
+    color:#241a08; border:none; padding:8px 14px; border-radius:11px;
+    font-weight:700; font-size:12.5px; cursor:pointer;
+    display:flex; align-items:center; gap:5px;
+    font-family:'Manrope',sans-serif;
+    transition: transform .15s ease;
+  }
+  .post-task-btn:active{ transform: scale(0.95); }
+
+  /* ===== hex stat grid ===== */
+  .stat-grid{ display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+  .stat-card{
+    background:var(--card); border:1px solid var(--card-border);
+    border-radius:16px; padding:16px 14px;
+    position:relative;
+  }
+  .stat-card .hexmark{
+    width:22px; height:22px; margin-bottom:10px;
+    clip-path: polygon(25% 6%, 75% 6%, 100% 50%, 75% 94%, 25% 94%, 0% 50%);
+    background: rgba(242,169,60,0.16);
+    display:flex; align-items:center; justify-content:center;
+    font-size:11px;
+  }
+  .stat-card .label{ font-size:11.5px; color:var(--text-muted); font-weight:600; }
+  .stat-card .val{
+    font-family:'IBM Plex Mono', monospace; font-weight:600;
+    font-size:20px; margin-top:5px; color:var(--text);
+  }
+
+  /* ===== task cards with honeycomb progress ===== */
+  .task-list{
+    max-height: calc(100dvh - 210px);
+    overflow-y: auto;
+    padding-right: 2px;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin;
+    scrollbar-color: var(--honey-deep) transparent;
+  }
+  .task-list::-webkit-scrollbar{ width:5px; }
+  .task-list::-webkit-scrollbar-thumb{ background:var(--honey-deep); border-radius:10px; }
+
+  /* ===== platform grid ===== */
+  .platform-grid{
+    display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px;
+    max-height: calc(100dvh - 190px);
+    overflow-y: auto;
+    padding-right:2px; padding-bottom:10px;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin;
+    scrollbar-color: var(--honey-deep) transparent;
+  }
+  .platform-grid::-webkit-scrollbar{ width:5px; }
+  .platform-grid::-webkit-scrollbar-thumb{ background:var(--honey-deep); border-radius:10px; }
+  .platform-card{
+    background:var(--card); border:1px solid var(--card-border);
+    border-radius:16px; padding:16px 8px 12px;
+    display:flex; flex-direction:column; align-items:center; gap:8px;
+    cursor:pointer; text-align:center;
+    transition: transform .15s ease, border-color .15s ease;
+  }
+  .platform-card:active{ transform: scale(0.95); }
+  .platform-card .p-hex{
+    width:42px; height:42px;
+    clip-path: polygon(25% 6%, 75% 6%, 100% 50%, 75% 94%, 25% 94%, 0% 50%);
+    background: rgba(242,169,60,0.14);
+    display:flex; align-items:center; justify-content:center;
+    font-family:'IBM Plex Mono', monospace; font-weight:800; font-size:13px;
+    color: var(--honey-light); letter-spacing:-0.02em;
+  }
+  .platform-card .p-name{ font-size:12px; font-weight:700; }
+  .platform-card .p-count{
+    font-family:'IBM Plex Mono', monospace; font-size:10px; color:var(--honey);
+  }
+  .platform-card.locked{ opacity:0.5; }
+  .platform-card.locked .p-hex{ background:rgba(255,255,255,0.05); }
+  .platform-card.locked .p-count{ color:var(--text-muted); }
+
+  .lock-banner{
+    background:rgba(242,169,60,0.1); border:1px solid var(--card-border);
+    border-radius:12px; padding:11px 13px; margin-bottom:12px;
+    font-size:12px; color:var(--honey-light); line-height:1.5;
+  }
+  .task-card{
+    background:var(--card); border:1px solid var(--card-border);
+    border-radius:16px; padding:14px 16px; margin-bottom:10px;
+    display:flex; align-items:center; gap:12px;
+  }
+  .task-hex{
+    flex-shrink:0; width:40px; height:40px;
+    clip-path: polygon(25% 6%, 75% 6%, 100% 50%, 75% 94%, 25% 94%, 0% 50%);
+    display:flex; align-items:center; justify-content:center;
+    font-size:17px;
+    background: rgba(255,255,255,0.05);
+    transition: background .3s ease;
+  }
+  .task-hex.done{ background: linear-gradient(155deg, var(--honey-light), var(--honey-deep)); }
+  .task-body{ flex:1; min-width:0; }
+  .task-body .title{ font-weight:700; font-size:14px; }
+  .task-body .desc{ font-size:12px; color:var(--text-muted); margin-top:2px; }
+  .task-body .pts{
+    font-family:'IBM Plex Mono', monospace; font-size:12px; font-weight:600;
+    color:var(--sage); margin-top:6px;
+  }
+  .claim-btn{
+    background: linear-gradient(155deg, var(--honey-light), var(--honey-deep));
+    color:#241a08; border:none; padding:9px 15px; border-radius:11px;
+    font-weight:700; font-size:12.5px; cursor:pointer; white-space:nowrap;
+    transition: transform .15s ease;
+  }
+  .claim-btn:active{ transform: scale(0.94); }
+  .claim-btn.disabled{
+    background:transparent; border:1px solid var(--card-border);
+    color:var(--sage); cursor:default;
+  }
+  .claim-btn.disabled:active{ transform:none; }
+
+  /* ===== referral ===== */
+  .ref-hero{
+    text-align:center; padding:22px 10px 6px;
+  }
+  .ref-hero .combcluster{
+    width:120px; height:96px; margin:0 auto 14px;
+    display:grid; grid-template-columns:repeat(3,1fr); gap:5px;
+  }
+  .ref-hero .combcluster .cell{
+    clip-path: polygon(25% 6%, 75% 6%, 100% 50%, 75% 94%, 25% 94%, 0% 50%);
+    background: rgba(242,169,60,0.14);
+  }
+  .ref-hero .combcluster .cell.filled{
+    background: linear-gradient(155deg, var(--honey-light), var(--honey-deep));
+  }
+  .ref-hero h2{ font-family:'Fraunces',serif; font-size:19px; font-weight:600; }
+  .ref-hero p{ font-size:12.5px; color:var(--text-muted); margin-top:6px; line-height:1.5; }
+
+  .ref-link-box{
+    background:var(--card); border:1px solid var(--card-border);
+    border-radius:16px; padding:16px; margin:18px 0 14px;
+  }
+  .ref-link-box .lbl{
+    font-size:11px; letter-spacing:0.06em; text-transform:uppercase;
+    color:var(--text-muted); font-weight:700; margin-bottom:9px;
+  }
+  .ref-link-row{ display:flex; gap:8px; }
+  .ref-link-row input{
+    flex:1; background:var(--bg-soft); border:1px solid var(--card-border);
+    color:var(--text); border-radius:10px; padding:10px 12px;
+    font-size:12px; font-family:'IBM Plex Mono',monospace;
+  }
+  .copy-btn{
+    background: linear-gradient(155deg, var(--honey-light), var(--honey-deep));
+    color:#241a08; border:none; padding:0 16px; border-radius:10px;
+    font-weight:700; font-size:12.5px; cursor:pointer;
+  }
+
+  /* ===== bottom nav ===== */
+  /* ===== history ===== */
+  .hist-header{
+    display:flex; align-items:center; gap:10px; margin:14px 0 18px;
+  }
+  .back-btn{
+    width:34px; height:34px; border-radius:10px; border:1px solid var(--card-border);
+    background:rgba(255,255,255,0.05); color:var(--text); font-size:16px;
+    cursor:pointer; display:flex; align-items:center; justify-content:center;
+  }
+  .hist-header h2{ font-family:'Fraunces',serif; font-size:18px; font-weight:600; }
+
+  .txn-list{
+    max-height: calc(100dvh - 100px);
+    overflow-y: auto;
+    padding-right: 2px;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin;
+    scrollbar-color: var(--honey-deep) transparent;
+  }
+  .txn-list::-webkit-scrollbar{ width:5px; }
+  .txn-list::-webkit-scrollbar-thumb{ background:var(--honey-deep); border-radius:10px; }
+
+  .txn-row{
+    display:flex; align-items:center; gap:12px;
+    padding:13px 4px; border-bottom:1px solid var(--card-border);
+  }
+  .txn-row:last-child{ border-bottom:none; }
+  .txn-icon{
+    flex-shrink:0; width:38px; height:38px;
+    clip-path: polygon(25% 6%, 75% 6%, 100% 50%, 75% 94%, 25% 94%, 0% 50%);
+    display:flex; align-items:center; justify-content:center; font-size:15px;
+  }
+  .txn-icon.in{ background: rgba(143,185,126,0.18); }
+  .txn-icon.out{ background: rgba(224,122,95,0.18); }
+  .txn-body{ flex:1; min-width:0; }
+  .txn-body .t{ font-weight:700; font-size:13.5px; }
+  .txn-body .d{ font-size:11px; color:var(--text-muted); margin-top:2px; }
+  .txn-amt{ font-family:'IBM Plex Mono',monospace; font-weight:600; font-size:13.5px; white-space:nowrap; }
+  .txn-amt.in{ color:var(--sage); }
+  .txn-amt.out{ color:var(--coral); }
+  .txn-status{
+    font-size:10px; margin-top:3px; font-weight:600; text-align:right;
+  }
+  .txn-status.pending{ color:var(--honey); }
+  .txn-status.done{ color:var(--text-muted); }
+
+  /* ===== post task form ===== */
+  .field{ margin-bottom:16px; }
+  .field label{
+    display:block; font-size:11.5px; font-weight:700; color:var(--text-muted);
+    text-transform:uppercase; letter-spacing:0.05em; margin-bottom:7px;
+  }
+  .field select, .field input, .field textarea{
+    width:100%; background:var(--card); border:1px solid var(--card-border);
+    color:var(--text); border-radius:12px; padding:12px 13px;
+    font-size:14px; font-family:'Manrope',sans-serif;
+  }
+  .field textarea{ resize:vertical; min-height:64px; }
+  .field-row{ display:flex; gap:10px; }
+  .field-row .field{ flex:1; }
+  .platform-pick{
+    display:grid; grid-template-columns:repeat(4,1fr); gap:8px;
+  }
+  .platform-pick .pp-item{
+    background:var(--card); border:1px solid var(--card-border); border-radius:12px;
+    padding:10px 4px; text-align:center; cursor:pointer; font-size:11px; font-weight:600;
+  }
+  .platform-pick .pp-item .pp-hex{
+    width:30px; height:30px; margin:0 auto 5px;
+    clip-path: polygon(25% 6%, 75% 6%, 100% 50%, 75% 94%, 25% 94%, 0% 50%);
+    background:rgba(242,169,60,0.14); display:flex; align-items:center; justify-content:center;
+    font-family:'IBM Plex Mono', monospace; font-weight:800; font-size:10.5px;
+    color: var(--honey-light); letter-spacing:-0.02em;
+  }
+  .platform-pick .pp-item.selected .pp-hex{ color:#241a08; }
+  .platform-pick .pp-item.selected{ border-color:var(--honey); background:rgba(242,169,60,0.1); }
+  .platform-pick .pp-item.selected .pp-hex{ background: linear-gradient(155deg, var(--honey-light), var(--honey-deep)); }
+
+  .type-chips{ display:flex; flex-wrap:wrap; gap:8px; }
+  .type-chip{
+    background:var(--card); border:1px solid var(--card-border); border-radius:20px;
+    padding:9px 15px; font-size:12.5px; font-weight:600; cursor:pointer;
+    transition: background .15s ease, border-color .15s ease;
+  }
+  .type-chip.selected{
+    background: linear-gradient(155deg, var(--honey-light), var(--honey-deep));
+    color:#241a08; border-color:var(--honey);
+  }
+
+  .cost-summary{
+    background: linear-gradient(165deg, #332612, #241a10);
+    border:1px solid var(--card-border); border-radius:16px; padding:18px;
+    margin:20px 0; text-align:center;
+  }
+  .cost-summary .label{ font-size:11.5px; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.05em; }
+  .cost-summary .amt{ font-family:'Fraunces',serif; font-weight:700; font-size:32px; margin-top:6px; color:var(--text); }
+  .cost-summary .amt .unit{ font-size:14px; color:var(--text-muted); font-family:'Manrope',sans-serif; font-weight:600; }
+  .cost-summary .note{ font-size:11px; color:var(--text-muted); margin-top:6px; }
+
+  .submit-post-btn{
+    width:100%; border:none; padding:15px; border-radius:14px;
+    background: linear-gradient(155deg, var(--honey-light), var(--honey-deep));
+    color:#241a08; font-weight:800; font-size:15px; cursor:pointer;
+    font-family:'Manrope',sans-serif;
+  }
+  .submit-post-btn:active{ transform: scale(0.98); }
+
+  /* ===== task detail ===== */
+  .td-card{
+    background: linear-gradient(165deg, #332612, #241a10);
+    border:1px solid var(--card-border); border-radius:16px; padding:16px;
+    display:flex; align-items:center; justify-content:space-between;
+    margin-bottom:20px;
+  }
+  .td-top{ display:flex; align-items:center; gap:12px; }
+  .td-hex{
+    width:42px; height:42px;
+    clip-path: polygon(25% 6%, 75% 6%, 100% 50%, 75% 94%, 25% 94%, 0% 50%);
+    background: linear-gradient(155deg, var(--honey-light), var(--honey-deep));
+    display:flex; align-items:center; justify-content:center;
+    font-family:'IBM Plex Mono', monospace; font-weight:800; font-size:13px; color:#241a08;
+  }
+  .td-title{ font-weight:700; font-size:14.5px; }
+  .td-sub{ font-size:11.5px; color:var(--text-muted); margin-top:2px; }
+  .td-reward{
+    font-family:'IBM Plex Mono', monospace; font-weight:600; font-size:14px; color:var(--sage);
+  }
+  .steps-list{ display:flex; flex-direction:column; gap:8px; }
+  .step-item{
+    display:flex; align-items:flex-start; gap:10px;
+    background:var(--card); border:1px solid var(--card-border);
+    border-radius:12px; padding:10px 12px; font-size:12.5px; line-height:1.5;
+  }
+  .step-item .num{
+    flex-shrink:0; width:20px; height:20px; border-radius:6px;
+    background:rgba(242,169,60,0.16); color:var(--honey-light);
+    display:flex; align-items:center; justify-content:center;
+    font-family:'IBM Plex Mono', monospace; font-size:11px; font-weight:700;
+  }
+  .td-note{ font-size:11px; color:var(--text-muted); text-align:center; margin-top:10px; line-height:1.5; }
+
+  /* ===== deposit / withdraw ===== */
+  .addr-box{
+    background:var(--card); border:1px solid var(--card-border); border-radius:14px;
+    padding:14px; margin-bottom:16px;
+  }
+  .addr-box .lbl{
+    font-size:11px; text-transform:uppercase; letter-spacing:0.05em; color:var(--text-muted);
+    font-weight:700; margin-bottom:8px;
+  }
+  .addr-row{ display:flex; gap:8px; align-items:center; }
+  .addr-row .addr-text{
+    flex:1; font-family:'IBM Plex Mono',monospace; font-size:11.5px;
+    background:var(--bg-soft); border:1px solid var(--card-border); border-radius:10px;
+    padding:10px 12px; word-break:break-all; color:var(--text);
+  }
+  .addr-row .copy-btn{ flex-shrink:0; }
+  .network-chips{ display:flex; gap:8px; margin-top:10px; }
+  .net-chip{
+    flex:1; text-align:center; padding:9px 6px; border-radius:10px;
+    background:var(--bg-soft); border:1px solid var(--card-border);
+    font-size:12px; font-weight:700; cursor:pointer;
+  }
+  .net-chip.selected{ background: linear-gradient(155deg, var(--honey-light), var(--honey-deep)); color:#241a08; border-color:var(--honey); }
+  .convert-note{
+    font-size:11.5px; color:var(--honey-light); margin-top:6px;
+  }
+  .warn-box{
+    background:rgba(224,122,95,0.1); border:1px solid rgba(224,122,95,0.3);
+    border-radius:12px; padding:11px 13px; font-size:11.5px; color:#f0a790;
+    line-height:1.5; margin-bottom:16px;
+  }
+
+  .bottomnav{
+    position:fixed; left:0; right:0; bottom:0;
+    display:flex; border-top:1px solid var(--card-border);
+    background: rgba(26,19,12,0.92); backdrop-filter: blur(10px);
+    padding-bottom: env(safe-area-inset-bottom);
+    z-index:2;
+  }
+  .navbtn{
+    flex:1; text-align:center; padding:12px 0 10px;
+    background:none; border:none; color:var(--text-muted);
+    font-size:11.5px; font-weight:600; cursor:pointer;
+    font-family:'Manrope',sans-serif;
+  }
+  .navbtn .icon{
+    width:20px; height:20px; margin:0 auto 4px;
+    clip-path: polygon(25% 6%, 75% 6%, 100% 50%, 75% 94%, 25% 94%, 0% 50%);
+    background: var(--card-border);
+    display:flex; align-items:center; justify-content:center; font-size:10px;
+    transition: background .2s ease;
+  }
+  .navbtn.active{ color: var(--honey-light); }
+  .navbtn.active .icon{ background: linear-gradient(155deg, var(--honey-light), var(--honey-deep)); }
+</style>
+</head>
+<body>
+
+<div class="app">
+  <div class="topbar" id="main-topbar">
+    <div class="brand">
+      <div class="hex">🐝</div>
+      <div>
+        <h1>Bee Wallet</h1>
+        <div class="sub">টাস্ক করো, honey জমাও</div>
+      </div>
+    </div>
+  </div>
+
+  <main id="main-content">
+    <div id="screen-home" class="screen active">
+      <div class="home-greeting" style="margin:4px 2px 14px;">
+        <div id="home-user-name" style="font-size:20px;font-weight:800;color:var(--honey-light);margin-top:2px;">User</div>
+      </div>
+
+      <div class="balance-card">
+        <div class="hexdeco"></div>
+        <div class="label">Total Balance</div>
+        <div class="amount"><span id="balance-value">0</span> <span class="unit">honey</span></div>
+        <div class="btn-row">
+          <button class="btn-primary" onclick="showScreen('deposit')"><span class="ic">↓</span>Deposit</button>
+          <button class="btn-secondary" onclick="showScreen('withdraw')"><span class="ic">↑</span>Withdraw</button>
+          <button class="btn-tertiary" onclick="showScreen('history')"><span class="ic">🕓</span>History</button>
+        </div>
+      </div>
+
+      <div class="section-title"><span class="eyebrow">Overview</span></div>
+      <div class="stat-grid">
+        <div class="stat-card"><div class="hexmark">◆</div><div class="label">Total earned</div><div class="val" id="earned-value">0</div></div>
+        <div class="stat-card"><div class="hexmark">⚑</div><div class="label">Referrals</div><div class="val" id="referrals-value">0</div></div>
+        <div class="stat-card"><div class="hexmark">✓</div><div class="label">Tasks done</div><div class="val" id="done-value">0</div></div>
+        <div class="stat-card"><div class="hexmark">◈</div><div class="label">Available</div><div class="val" id="available-value">0</div></div>
+      </div>
+    </div>
+
+    <div id="screen-tasks" class="screen">
+
+      <div id="platform-grid-view">
+        <div class="tasks-header">
+          <div class="section-title" style="margin:0;"><span class="eyebrow">12 platform</span> Select platform</div>
+          <button class="post-task-btn" onclick="showScreen('posttask')">+ Post Task</button>
+        </div>
+
+        <div class="lock-banner" id="lock-banner"></div>
+        <div class="platform-grid" id="platform-grid"></div>
+      </div>
+
+      <div id="platform-detail-view" style="display:none;">
+        <div class="hist-header">
+          <button class="back-btn" onclick="closePlatform()">←</button>
+          <h2 id="platform-detail-title">Facebook</h2>
+        </div>
+        <div class="task-list" id="platform-task-list"></div>
+      </div>
+
+    </div>
+
+    <div id="screen-ref" class="screen">
+      <div class="ref-hero">
+        <div class="combcluster">
+          <div class="cell filled"></div><div class="cell filled"></div><div class="cell"></div>
+          <div class="cell filled"></div><div class="cell filled"></div><div class="cell filled"></div>
+          <div class="cell"></div><div class="cell filled"></div><div class="cell"></div>
+        </div>
+        <h2>প্রতি রেফারেলে <span id="ref-bonus-text">Loading...</span></h2>
+        <p>বন্ধুরা তোমার লিংক দিয়ে join করলেই<br>তুমি বোনাস পাবে</p>
+      </div>
+
+      <div class="ref-link-box">
+        <div class="lbl">Your referral link</div>
+        <div class="ref-link-row">
+          <input id="referral-link" value="" readonly>
+          <button class="copy-btn" onclick="copyText('referral-link')">Copy</button>
+        </div>
+      </div>
+
+      <div class="stat-grid">
+        <div class="stat-card"><div class="hexmark">⚑</div><div class="label">Total referrals</div><div class="val" id="ref-count-value">0</div></div>
+        <div class="stat-card"><div class="hexmark">◈</div><div class="label">Earned from refs</div><div class="val" id="ref-earned-value">0.0</div></div>
+      </div>
+    </div>
+  </main>
+
+  <div id="screen-history" class="screen">
+    <main style="padding:20px 20px 20px;">
+    <div class="hist-header">
+      <button class="back-btn" onclick="showScreen('home')">←</button>
+      <h2>History</h2>
+    </div>
+
+    <div class="txn-list">
+    <div class="txn-row">
+      <div class="txn-icon in">✓</div>
+      <div class="txn-body"><div class="t">Task: Join our channel</div><div class="d">আজ, ৭:১২ PM</div></div>
+      <div style="text-align:right;">
+        <div class="txn-amt in">+5.0</div>
+        <div class="txn-status done">সম্পন্ন</div>
+      </div>
+    </div>
+    <div class="txn-row">
+      <div class="txn-icon out">↑</div>
+      <div class="txn-body"><div class="t">Withdraw</div><div class="d">গতকাল, ৩:৪০ PM</div></div>
+      <div style="text-align:right;">
+        <div class="txn-amt out">-50.0</div>
+        <div class="txn-status pending">প্রসেসিং</div>
+      </div>
+    </div>
+    <div class="txn-row">
+      <div class="txn-icon in">⚑</div>
+      <div class="txn-body"><div class="t">Referral bonus</div><div class="d">২ দিন আগে</div></div>
+      <div style="text-align:right;">
+        <div class="txn-amt in" id="history-ref-bonus">—</div>
+        <div class="txn-status done">সম্পন্ন</div>
+      </div>
+    </div>
+    <div class="txn-row">
+      <div class="txn-icon in">↓</div>
+      <div class="txn-body"><div class="t">Deposit</div><div class="d">৩ দিন আগে</div></div>
+      <div style="text-align:right;">
+        <div class="txn-amt in">+20.0</div>
+        <div class="txn-status done">সম্পন্ন</div>
+      </div>
+    </div>
+    <div class="txn-row">
+      <div class="txn-icon in">✓</div>
+      <div class="txn-body"><div class="t">Task: Rate the bot</div><div class="d">৪ দিন আগে</div></div>
+      <div style="text-align:right;">
+        <div class="txn-amt in">+2.0</div>
+        <div class="txn-status done">সম্পন্ন</div>
+      </div>
+    </div>
+    <div class="txn-row">
+      <div class="txn-icon in">✓</div>
+      <div class="txn-body"><div class="t">Task: Follow on X</div><div class="d">৫ দিন আগে</div></div>
+      <div style="text-align:right;">
+        <div class="txn-amt in">+3.0</div>
+        <div class="txn-status done">সম্পন্ন</div>
+      </div>
+    </div>
+    <div class="txn-row">
+      <div class="txn-icon out">↑</div>
+      <div class="txn-body"><div class="t">Withdraw</div><div class="d">১ সপ্তাহ আগে</div></div>
+      <div style="text-align:right;">
+        <div class="txn-amt out">-30.0</div>
+        <div class="txn-status done">সম্পন্ন</div>
+      </div>
+    </div>
+    </div>
+    </main>
+  </div>
+
+  <div id="screen-posttask" class="screen">
+    <main style="padding:20px 20px 40px;">
+    <div class="hist-header">
+      <button class="back-btn" onclick="showScreen('tasks')">←</button>
+      <h2>Post Task</h2>
+    </div>
+
+    <div class="field">
+      <label>Platform বেছে নাও</label>
+      <div class="platform-pick" id="pt-platform-pick"></div>
+    </div>
+
+    <div class="field">
+      <label>Task Type (একাধিক বেছে নেওয়া যাবে)</label>
+      <div class="type-chips" id="pt-type-chips">
+        <div style="color:var(--text-muted); font-size:12px;">আগে Platform বেছে নাও</div>
+      </div>
+    </div>
+
+    <div class="field">
+      <label>Task Title</label>
+      <input type="text" id="pt-title" placeholder="যেমন: আমাদের Facebook পেজ ফলো করো">
+    </div>
+
+    <div class="field">
+      <label>Link / URL</label>
+      <input type="text" id="pt-link" placeholder="https://...">
+    </div>
+
+    <div class="field">
+      <label>Instruction (কী করতে হবে লিখো)</label>
+      <textarea id="pt-desc" placeholder="যেমন: পেজে গিয়ে ফলো করে স্ক্রিনশট দাও"></textarea>
+    </div>
+
+    <div class="field-row">
+      <div class="field">
+        <label>কতজন করবে</label>
+        <input type="number" id="pt-qty" value="50" min="1" oninput="updatePostCost()">
+      </div>
+      <div class="field">
+        <label>প্রতি জনে honey</label>
+        <input type="number" id="pt-reward" value="2" min="1" step="0.5" oninput="updatePostCost()">
+      </div>
+    </div>
+
+    <div class="cost-summary">
+      <div class="label">Total Cost</div>
+      <div class="amt"><span id="pt-total">100.0</span> <span class="unit">honey</span></div>
+      <div class="note">তোমার balance থেকে কাটা হবে</div>
+    </div>
+
+    <button class="submit-post-btn" onclick="submitPostTask()">Post Task</button>
+    </main>
+  </div>
+
+  <div id="screen-taskdetail" class="screen">
+    <main style="padding:20px 20px 40px;">
+    <div class="hist-header">
+      <button class="back-btn" onclick="closeTaskDetail()">←</button>
+      <h2>Task Details</h2>
+    </div>
+
+    <div class="td-card">
+      <div class="td-top">
+        <div class="td-hex" id="td-hex">F</div>
+        <div>
+          <div class="td-title" id="td-title">Follow Page</div>
+          <div class="td-sub" id="td-sub">Facebook</div>
+        </div>
+      </div>
+      <div class="td-reward" id="td-reward">+3 honey</div>
+    </div>
+
+    <div class="field">
+      <label>কীভাবে করবে</label>
+      <div class="steps-list" id="td-steps"></div>
+      <button class="submit-post-btn" id="td-open-link" style="margin-top:10px;">Open Task Link</button>
+    </div>
+
+    <div class="field">
+      <label>Description</label>
+      <textarea id="td-desc" placeholder="তুমি কীভাবে task টি সম্পন্ন করেছো লিখো"></textarea>
+    </div>
+
+    <div class="field">
+      <label>প্রমাণ (Screenshot) — ঐচ্ছিক</label>
+      <input type="file" id="td-screenshot" accept="image/*" multiple>
+    </div>
+
+    <button class="submit-post-btn" onclick="submitTaskProof()">Submit for Review</button>
+    </main>
+  </div>
+
+  <div id="screen-deposit" class="screen">
+    <main style="padding:20px 20px 40px;">
+    <div class="hist-header">
+      <button class="back-btn" onclick="showScreen('home')">←</button>
+      <h2>Deposit</h2>
+    </div>
+
+    <div class="addr-box">
+      <div class="lbl">এই bKash নাম্বারে Send Money করো</div>
+      <div class="addr-row">
+        <div class="addr-text" id="dep-address">01XXXXXXXXX</div>
+        <button class="copy-btn" onclick="copyText('dep-address')">Copy</button>
+      </div>
+    </div>
+
+    <div class="warn-box">⚠️ শুধু <b>Send Money</b> অপশনে টাকা পাঠাবে — Payment বা Cash Out দিয়ে পাঠালে গ্রহণ করা হবে না।</div>
+
+    <div class="field">
+      <label>পাঠানো Amount (৳ টাকা)</label>
+      <input type="number" id="dep-amount" placeholder="যেমন: 100" min="1" oninput="updateDepositConvert()">
+      <div class="convert-note" id="dep-convert">= 0 honey</div>
+    </div>
+
+    <div class="field">
+      <label>bKash Transaction ID (TrxID) — ঐচ্ছিক</label>
+      <input type="text" id="dep-txid" placeholder="যেমন: 9CG7XXXXXX">
+    </div>
+
+    <div class="field">
+      <label>তুমি যে নাম্বার থেকে পাঠিয়েছো</label>
+      <input type="text" id="dep-sender" placeholder="তোমার bKash নাম্বার">
+    </div>
+
+    <div class="field">
+      <label>প্রমাণ (Screenshot) — ঐচ্ছিক</label>
+      <input type="file" id="dep-screenshot" accept="image/*">
+    </div>
+
+    <button class="submit-post-btn" onclick="submitDeposit()">Submit Deposit</button>
+    </main>
+  </div>
+
+  <div id="screen-withdraw" class="screen">
+    <main style="padding:20px 20px 40px;">
+    <div class="hist-header">
+      <button class="back-btn" onclick="showScreen('home')">←</button>
+      <h2>Withdraw</h2>
+    </div>
+
+    <div class="cost-summary" style="margin-top:0;">
+      <div class="label">তোমার Balance</div>
+      <div class="amt"><span id="withdraw-balance">0</span> <span class="unit">honey</span></div>
+    </div>
+
+    <div class="field">
+      <label>কত honey withdraw করবে</label>
+      <input type="number" id="wd-amount" placeholder="যেমন: 50" min="1" oninput="updateWithdrawConvert()">
+      <div class="convert-note" id="wd-convert">= ৳ 0</div>
+    </div>
+
+    <div class="field">
+      <label>তোমার bKash নাম্বার (Send Money এ পাবে)</label>
+      <input type="text" id="wd-address" placeholder="01XXXXXXXXX">
+    </div>
+
+    <div class="warn-box">⏳ Withdraw request পাঠানোর পর manually যাচাই করে ২৪ ঘণ্টার মধ্যে bKash Send Money দিয়ে টাকা পাঠানো হবে।</div>
+
+    <button class="submit-post-btn" onclick="submitWithdraw()">Submit Withdraw Request</button>
+    </main>
+  </div>
+
+  <div class="bottomnav">
+    <button class="navbtn active" id="nav-home" onclick="showScreen('home')">
+      <div class="icon">⌂</div>Home
+    </button>
+    <button class="navbtn" id="nav-tasks" onclick="showScreen('tasks')">
+      <div class="icon">✓</div>Tasks
+    </button>
+    <button class="navbtn" id="nav-ref" onclick="showScreen('ref')">
+      <div class="icon">⚑</div>Referrals
+    </button>
+  </div>
+</div>
+
+
+<script>
+const API_URL = 'https://script.google.com/macros/s/AKfycbwSorncI56ri9a4e2viLTwtNNOyIPvKhd--nqG1_ADTqi0O-wE2QXWl62N-LrYTbLlltg/exec';
+const BOT_USERNAME = 'beewalletmicrotask_bot';
+
+let state = { user: {}, tasks: [], honeyPerTaka: 1, referralBonus: null };
+let currentTask = null;
+let currentPlatform = null;
+let ptSelectedPlatform = null;
+let ptSelectedTypes = [];
+
+const tg = window.Telegram && window.Telegram.WebApp ? window.Telegram.WebApp : null;
+if (tg) {
+  tg.ready();
+  tg.expand();
+}
+
+function showScreen(name){
+  const screens = ['home','tasks','ref','history','posttask','taskdetail','deposit','withdraw'];
+  screens.forEach(function(key){
+    const el = document.getElementById('screen-' + key);
+    if (el) el.classList.toggle('active', key === name);
+  });
+
+  ['home','tasks','ref'].forEach(function(key){
+    const nav = document.getElementById('nav-' + key);
+    if (nav) nav.classList.toggle('active', key === name);
+  });
+
+  const sub = ['history','posttask','taskdetail','deposit','withdraw'].indexOf(name) !== -1;
+  const top = document.getElementById('main-topbar');
+  const content = document.getElementById('main-content');
+  const bottom = document.querySelector('.bottomnav');
+  if (top) top.style.display = sub ? 'none' : 'flex';
+  if (content) content.style.display = sub ? 'none' : 'block';
+  if (bottom) bottom.style.display = sub ? 'none' : 'flex';
+
+  if (name === 'tasks') {
+    const grid = document.getElementById('platform-grid-view');
+    const detail = document.getElementById('platform-detail-view');
+    if (grid) grid.style.display = 'block';
+    if (detail) detail.style.display = 'none';
+    renderPlatformGrid();
+  }
+  if (name === 'ref') updateReferralUI();
+  if (name === 'posttask') {
+    renderPostTaskPlatformPick();
+    renderTypeChips();
+  }
+}
+
+function initData(){
+  return tg && tg.initData ? tg.initData : '';
+}
+
+async function api(action, extra){
+  const body = Object.assign({
+    action: action,
+    initData: initData()
+  }, extra || {});
+  const res = await fetch(API_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+    body: JSON.stringify(body)
+  });
+  const data = await res.json();
+  if (!data.ok) throw new Error(data.error || 'request_failed');
+  return data;
+}
+
+function esc(v){
+  return String(v == null ? '' : v).replace(/[&<>"']/g, function(c){
+    return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c];
+  });
+}
+
+function money(v){ return Number(v || 0).toFixed(2); }
+
+function errorText(e){
+  const m = String(e && e.message || e);
+  const map = {
+    invalid_init_data:'Telegram session invalid. App-টি Telegram-এর ভিতর থেকে খুলুন।',
+    insufficient_balance:'তোমার balance যথেষ্ট নেই।',
+    missing_bkash_number:'bKash নাম্বার দাও।',
+    invalid_amount:'Amount সঠিক দাও।',
+    own_task:'নিজের task নিজে করা যাবে না।',
+    task_inactive:'Task এখনো active নয়।',
+    task_full:'এই task-এর সব slot পূর্ণ হয়ে গেছে।',
+    already_submitted:'এই task-এ তুমি already submit করেছো।',
+    already_claimed:'Task already completed.',
+    not_joined:'আগে Telegram channel/group-এ join করো।',
+    task_not_found:'Task পাওয়া যায়নি।'
+  };
+  return map[m] || ('কাজটি করা যায়নি: ' + m);
+}
+
+function applyState(data){
+  state = {
+    user: data.user || {},
+    tasks: Array.isArray(data.tasks) ? data.tasks : [],
+    honeyPerTaka: Number(data.honeyPerTaka || 1),
+    referralBonus: (data.referralBonus == null ? null : Number(data.referralBonus))
+  };
+  updateWalletUI();
+  updateReferralUI();
+  renderPlatformGrid();
+}
+
+function updateReferralUI(){
+  const bonus = Number(state.referralBonus);
+  const count = Number(state.user.referral_count || 0);
+  const bonusText = document.getElementById('ref-bonus-text');
+  const countEl = document.getElementById('ref-count-value');
+  const earnedEl = document.getElementById('ref-earned-value');
+  const linkEl = document.getElementById('referral-link');
+  if (bonusText) bonusText.textContent = Number.isFinite(bonus) ? ('+' + money(bonus).replace(/\.00$/, '') + ' honey') : 'Loading...';
+  if (countEl) countEl.textContent = String(count);
+  if (earnedEl) earnedEl.textContent = Number.isFinite(bonus) ? money(count * bonus) : '—';
+  const histRef = document.getElementById('history-ref-bonus');
+  if (histRef) histRef.textContent = Number.isFinite(bonus) ? ('+' + money(bonus)) : '—';
+  if (linkEl && state.user.user_id) {
+    linkEl.value = 'https://t.me/' + BOT_USERNAME + '?startapp=' + encodeURIComponent(state.user.user_id);
+  }
+}
+
+function updateWalletUI(){
+  const user = state.user || {};
+  const tgUser = tg && tg.initDataUnsafe ? (tg.initDataUnsafe.user || {}) : {};
+  const displayName =
+    user.full_name ||
+    [user.first_name, user.last_name].filter(Boolean).join(' ') ||
+    user.first_name ||
+    tgUser.first_name ||
+    user.username ||
+    tgUser.username ||
+    'User';
+
+  const nameEl = document.getElementById('home-user-name');
+  if (nameEl) nameEl.textContent = String(displayName);
+
+  const balance = Number(user.balance || 0);
+  const earned = Number(state.user.total_earned || 0);
+  const refs = Number(state.user.referral_count || 0);
+  const done = state.tasks.filter(function(t){ return t.completed; }).length;
+
+  const ids = {
+    'balance-value': balance,
+    'earned-value': earned,
+    'referrals-value': refs,
+    'done-value': done,
+    'available-value': balance,
+    'withdraw-balance': balance
+  };
+  Object.keys(ids).forEach(function(id){
+    const el = document.getElementById(id);
+    if (el) el.textContent = Number(ids[id]).toFixed(1).replace(/\.0$/, '');
+  });
+  updateDepositConvert();
+  updateWithdrawConvert();
+}
+
+function platformName(key){
+  const names = {
+    ads:'Ads', telegram:'Telegram', facebook:'Facebook', instagram:'Instagram',
+    tiktok:'TikTok', gmail:'Gmail', youtube:'YouTube', whatsapp:'WhatsApp',
+    x:'X', discord:'Discord', linkedin:'LinkedIn', snapchat:'Snapchat'
+  };
+  return names[String(key || '').toLowerCase()] || String(key || 'Other');
+}
+function platformIcon(key){
+  const icons = {
+    ads:'📺', telegram:'📢', facebook:'📘', instagram:'📸', tiktok:'🎵',
+    gmail:'✉️', youtube:'▶️', whatsapp:'💬', x:'✖️', discord:'🎮',
+    linkedin:'💼', snapchat:'👻', other:'◈'
+  };
+  return icons[String(key || '').toLowerCase()] || '◈';
+}
+function platformMono(key){
+  const monos = {
+    ads:'AD', telegram:'T', facebook:'F', instagram:'IG', tiktok:'TT',
+    gmail:'G', youtube:'YT', whatsapp:'WA', x:'X', discord:'DC',
+    linkedin:'in', snapchat:'SC', other:'◈'
+  };
+  return monos[String(key || '').toLowerCase()] || '◈';
+}
+
+function normalizePlatform(t){
+  const allowed = ['ads','telegram','facebook','instagram','tiktok','gmail','youtube','whatsapp','x','discord','linkedin','snapchat'];
+  let key = String(t.platform || '').trim().toLowerCase();
+  if (allowed.indexOf(key) !== -1) return key;
+
+  const text = (String(t.type || '') + ' ' + String(t.title || '')).toLowerCase();
+  if (text.indexOf('ad') !== -1 || text.indexOf('watch') !== -1) return 'ads';
+  if (text.indexOf('telegram') !== -1 || text.indexOf('channel') !== -1 || text.indexOf('group') !== -1) return 'telegram';
+  if (text.indexOf('facebook') !== -1) return 'facebook';
+  if (text.indexOf('instagram') !== -1) return 'instagram';
+  if (text.indexOf('tiktok') !== -1) return 'tiktok';
+  if (text.indexOf('gmail') !== -1 || text.indexOf('email') !== -1 || text.indexOf('verify') !== -1) return 'gmail';
+  if (text.indexOf('youtube') !== -1) return 'youtube';
+  if (text.indexOf('whatsapp') !== -1) return 'whatsapp';
+  if (text.indexOf('discord') !== -1) return 'discord';
+  if (text.indexOf('linkedin') !== -1) return 'linkedin';
+  if (text.indexOf('snapchat') !== -1) return 'snapchat';
+  if (text.indexOf('twitter') !== -1 || text.indexOf('retweet') !== -1) return 'x';
+  return 'other';
+}
+
+function groupedTasks(){
+  const groups = {};
+  state.tasks.forEach(function(t){
+    const key = normalizePlatform(t);
+    if (!groups[key]) groups[key] = [];
+    t._platform = key;
+    groups[key].push(t);
+  });
+  return groups;
+}
+
+const PLATFORM_CATALOG = [
+  ['ads','Ads'], ['telegram','Telegram'], ['facebook','Facebook'],
+  ['instagram','Instagram'], ['tiktok','TikTok'], ['gmail','Gmail'],
+  ['youtube','YouTube'], ['whatsapp','WhatsApp'], ['x','X'],
+  ['discord','Discord'], ['linkedin','LinkedIn'], ['snapchat','Snapchat']
+];
+
+function renderPlatformGrid(){
+  const grid = document.getElementById('platform-grid');
+  if (!grid) return;
+  grid.innerHTML = '';
+
+  const groups = groupedTasks();
+  const adsTasks = groups.ads || [];
+  const adsDone = adsTasks.filter(function(t){ return t.completed; }).length;
+
+  // Demo rule: exactly 3 Ads must be completed before other platforms unlock.
+  // After all 3 are done, Ads locks again until the backend's 24h cycle resets them.
+  const adsFinished = adsTasks.length >= 3 && adsDone >= 3;
+
+  PLATFORM_CATALOG.forEach(function(pair){
+    const key = pair[0], name = pair[1], list = groups[key] || [];
+    const locked = key === 'ads' ? adsFinished : !adsFinished;
+    const card = document.createElement('div');
+    card.className = 'platform-card' + (locked ? ' locked' : '');
+
+    card.onclick = function(){
+      if (locked) {
+        if (key === 'ads') {
+          alert('🔒 আজকের ৩টা Ads দেখা শেষ। ২৪ ঘণ্টা পর আবার Ads দেখতে পারবে।');
+        } else {
+          alert('🔒 আগে Ads-এর ৩টা বিজ্ঞাপন দেখো, তারপর এই platform unlock হবে।');
+        }
+        return;
+      }
+      openPlatform(key);
+    };
+
+    const doneCount = list.filter(function(t){ return t.completed; }).length;
+    const countText = key === 'ads' ? (doneCount + '/3') : (doneCount + '/' + list.length);
+
+    card.innerHTML =
+      '<div class="p-hex">' + esc(locked && key === 'ads' ? '🔒' : platformMono(key)) + '</div>' +
+      '<div class="p-name">' + esc(name) + '</div>' +
+      '<div class="p-count">' + (locked ? 'Locked' : countText) + '</div>';
+    grid.appendChild(card);
+  });
+
+  const banner = document.getElementById('lock-banner');
+  if (banner) {
+    if (adsFinished) {
+      banner.textContent = '✅ আজকের ৩টা Ads দেখা হয়ে গেছে — বাকি সব task unlock! Ads আবার ২৪ ঘণ্টা পর খুলবে।';
+    } else {
+      banner.textContent = '🔒 আগে Ads-এর ৩টা বিজ্ঞাপন দেখো (honey নেই, শুধু view গণনা হবে) — তাহলেই বাকি সব task unlock হবে।';
+    }
+  }
+}
+
+function openPlatform(key){
+  const groups = groupedTasks();
+  const list = groups[key] || [];
+  const adsTasks = groups.ads || [];
+  const adsDone = adsTasks.filter(function(t){ return t.completed; }).length;
+  const adsFinished = adsTasks.length >= 3 && adsDone >= 3;
+
+  if (key === 'ads' && adsFinished) {
+    alert('🔒 আজকের ৩টা Ads দেখা শেষ। ২৪ ঘণ্টা পর আবার Ads দেখতে পারবে।');
+    return;
+  }
+  if (key !== 'ads' && !adsFinished) {
+    alert('🔒 আগে Ads-এর ৩টা বিজ্ঞাপন দেখো, তারপর এই platform unlock হবে।');
+    return;
+  }
+
+  currentPlatform = key;
+  document.getElementById('platform-detail-title').textContent = platformName(key);
+  renderTaskList(list);
+  document.getElementById('platform-grid-view').style.display = 'none';
+  document.getElementById('platform-detail-view').style.display = 'block';
+}
+
+function renderTaskList(list){
+  const wrap = document.getElementById('platform-task-list');
+  wrap.innerHTML = '';
+  if (!list.length) {
+    wrap.innerHTML = '<div style="padding:20px;color:var(--text-muted);text-align:center;">এই platform-এ এখন কোনো live task নেই।</div>';
+    return;
+  }
+
+  list.forEach(function(t){
+    const card = document.createElement('div');
+    card.className = 'task-card';
+    const platform = t._platform || normalizePlatform(t);
+    const isAds = platform === 'ads';
+    const isTelegram = platform === 'telegram';
+
+    let button;
+    if (t.completed) {
+      button = '<button class="claim-btn disabled">Done</button>';
+    } else if (t.pending) {
+      button = '<button class="claim-btn disabled" style="color:var(--honey);border-color:var(--honey);">Pending</button>';
+    } else if (isAds) {
+      button = '<button class="claim-btn" onclick="watchRealTask(\'' + esc(t.task_id) + '\')">Watch</button>';
+    } else if (isTelegram) {
+      button = '<button class="claim-btn" onclick="verifyRealTelegramTask(\'' + esc(t.task_id) + '\')">Verify</button>';
+    } else {
+      button = '<button class="claim-btn" onclick="openTaskDetailById(\'' + esc(t.task_id) + '\')">Details</button>';
+    }
+
+    const rewardLine = isAds
+      ? '<div class="pts" style="color:var(--text-muted);">👁️ শুধু view গণনা হবে — honey নেই</div>'
+      : '<div class="pts">+' + money(t.points) + ' honey</div>';
+
+    card.innerHTML =
+      '<div class="task-hex' + (t.completed ? ' done' : '') + '">' +
+        (t.completed ? '✓' : (t.pending ? '⏳' : esc(platformIcon(platform)))) +
+      '</div>' +
+      '<div class="task-body">' +
+        '<div class="title">' + esc(t.title) + '</div>' +
+        '<div class="desc">' + esc(t.description || t.type || '') + '</div>' +
+        rewardLine +
+      '</div>' + button;
+    wrap.appendChild(card);
+  });
+}
+
+function getTaskById(id){
+  return state.tasks.find(function(t){ return String(t.task_id) === String(id); });
+}
+
+function openTaskLink(t){
+  if (t && t.target) window.open(t.target, '_blank');
+}
+
+async function watchRealTask(taskId){
+  const t = getTaskById(taskId);
+  if (!t) return;
+  if (t.target) window.open(t.target, '_blank');
+  try {
+    await api('claim_task', { taskId: taskId });
+    await refreshState();
+  } catch(e){ alert(errorText(e)); }
+}
+
+async function verifyRealTelegramTask(taskId){
+  const t = getTaskById(taskId);
+  if (!t) return;
+  if (t.target) window.open(t.target, '_blank');
+  try {
+    await api('claim_task', { taskId: taskId });
+    await refreshState();
+  } catch(e){ alert(errorText(e)); }
+}
+
+function getTaskById(id){
+  return state.tasks.find(function(t){ return String(t.task_id) === String(id); });
+}
+
+function stepsForTask(title){
+  const T = String(title || '').toLowerCase();
+  if (T.indexOf('watch ad') !== -1) return ['বিজ্ঞাপনের link নতুন tab-এ খুলো','বিজ্ঞাপনটি সম্পূর্ণ দেখো','প্রয়োজনীয় proof রাখো','Description সহ proof submit করো'];
+  if (T.indexOf('follow') !== -1 || T.indexOf('subscribe') !== -1 || T.indexOf('join') !== -1 || T.indexOf('add friend') !== -1)
+    return ['লিংকে ট্যাপ করে page/account/group/channel-এ যাও','Follow / Subscribe / Join / Add করো','প্রমাণ হিসেবে screenshot নাও','Description সহ proof submit করো'];
+  if (T.indexOf('like') !== -1)
+    return ['লিংকে গিয়ে post/video খুঁজে বের করো','Like করো','প্রমাণ হিসেবে screenshot নাও','Description সহ proof submit করো'];
+  if (T.indexOf('comment') !== -1)
+    return ['লিংকে গিয়ে post/video খুঁজে বের করো','Comment করো','প্রমাণ হিসেবে screenshot নাও','Description সহ proof submit করো'];
+  if (T.indexOf('share') !== -1 || T.indexOf('retweet') !== -1)
+    return ['লিংকে গিয়ে post খুঁজে বের করো','Share / Retweet করো','প্রমাণ হিসেবে screenshot নাও','Description সহ proof submit করো'];
+  if (T.indexOf('verify email') !== -1)
+    return ['দেওয়া email verification instruction follow করো','Verification complete করো','প্রমাণ হিসেবে screenshot নাও','Description সহ proof submit করো'];
+  return ['Task-এর link খুলে instruction অনুযায়ী কাজটি করো','কাজ শেষ করার প্রমাণ রাখো','Description লিখো','Submit for review করো'];
+}
+
+function openTaskDetailById(taskId){
+  const t = getTaskById(taskId);
+  if (!t) return;
+  currentTask = t;
+  document.getElementById('td-hex').textContent = platformMono(t.platform);
+  document.getElementById('td-title').textContent = t.title || 'Task';
+  document.getElementById('td-sub').textContent = platformName(t.platform);
+  document.getElementById('td-reward').textContent = '+' + money(t.points) + ' honey';
+
+  const steps = document.getElementById('td-steps');
+  steps.innerHTML = '';
+  if (t.description) {
+    const d = document.createElement('div');
+    d.className = 'step-item';
+    d.innerHTML = '<div class="num">i</div><div>' + esc(t.description) + '</div>';
+    steps.appendChild(d);
+  }
+  stepsForTask(t.title).forEach(function(s,i){
+    const row = document.createElement('div');
+    row.className = 'step-item';
+    row.innerHTML = '<div class="num">' + (i+1) + '</div><div>' + esc(s) + '</div>';
+    steps.appendChild(row);
+  });
+  document.getElementById('td-desc').value = '';
+  document.getElementById('td-screenshot').value = '';
+  const linkBtn = document.getElementById('td-open-link');
+  if (linkBtn) {
+    linkBtn.style.display = t.target ? 'block' : 'none';
+    linkBtn.onclick = function(){ openTaskLink(t); };
+  }
+  showScreen('taskdetail');
+}
+
+async function claimBuiltInTask(taskId){
+  const t = getTaskById(taskId);
+  if (!t) return;
+  if ((t._platform || normalizePlatform(t)) === 'ads') return watchRealTask(taskId);
+  if ((t._platform || normalizePlatform(t)) === 'telegram') return verifyRealTelegramTask(taskId);
+  return openTaskDetailById(taskId);
+}
+
+async function submitTaskProof(){
+  if (!currentTask) return;
+  const desc = document.getElementById('td-desc').value.trim();
+  if (!desc){ alert('আগে Description লিখো।'); return; }
+
+  try {
+    await api('submit_task_proof', {
+      taskId: currentTask.task_id,
+      description: desc
+    });
+    alert('✅ Proof জমা হয়েছে। Task owner-এর Telegram-এ review যাবে।');
+    currentTask = null;
+    await refreshState();
+    showScreen('tasks');
+  } catch(e){
+    alert(errorText(e));
+  }
+}
+
+function closeTaskDetail(){
+  currentTask = null;
+  showScreen('tasks');
+}
+
+function closePlatform(){
+  document.getElementById('platform-detail-view').style.display = 'none';
+  document.getElementById('platform-grid-view').style.display = 'block';
+  renderPlatformGrid();
+}
+
+/* Original task rules from the demo — kept intact for Post Task */
+const TASK_RULES = {
+  ads: [
+    ['Watch Ad','বিজ্ঞাপনটি দেখো (নতুন ট্যাবে খুলবে)',1],
+  ],
+  telegram: [
+    ['Join Channel','আমাদের চ্যানেলে join করো',5],
+    ['Join Group','গ্রুপে join করো',3],
+  ],
+  facebook: [
+    ['Follow Page','Facebook পেজ ফলো করো',3],
+    ['Like Page','পেজ লাইক করো',2],
+    ['Comment on Post','পোস্টে কমেন্ট করো',2],
+    ['Share Post','পোস্ট শেয়ার করো',3],
+  ],
+  instagram: [
+    ['Follow Account','Instagram এ ফলো করো',3],
+    ['Like Post','পোস্টে লাইক করো',2],
+    ['Comment','পোস্টে কমেন্ট করো',2],
+  ],
+  tiktok: [
+    ['Follow Account','TikTok এ ফলো করো',3],
+    ['Like Video','ভিডিও লাইক করো',2],
+  ],
+  gmail: [
+    ['Verify Email','Gmail দিয়ে verify করো',2],
+  ],
+  youtube: [
+    ['Subscribe Channel','চ্যানেল subscribe করো',4],
+    ['Like Video','ভিডিওতে লাইক করো',2],
+    ['Comment on Video','ভিডিওতে কমেন্ট করো',2],
+  ],
+  whatsapp: [
+    ['Join Channel','WhatsApp চ্যানেলে join করো',3],
+  ],
+  x: [
+    ['Follow Account','X এ ফলো করো',3],
+    ['Retweet Post','পোস্ট retweet করো',2],
+  ],
+  discord: [
+    ['Join Server','Discord সার্ভারে join করো',3],
+  ],
+  linkedin: [
+    ['Follow Page','LinkedIn পেজ ফলো করো',3],
+    ['Like Post','পোস্টে লাইক করো',2],
+  ],
+  snapchat: [
+    ['Add Friend','Snapchat এ add করো',2],
+  ]
+};
+
+function renderPostTaskPlatformPick(){
+  const wrap = document.getElementById('pt-platform-pick');
+  wrap.innerHTML = '';
+  Object.keys(TASK_RULES).forEach(function(key){
+    const item = document.createElement('div');
+    item.className = 'pp-item' + (ptSelectedPlatform === key ? ' selected' : '');
+    item.onclick = function(){
+      ptSelectedPlatform = key;
+      ptSelectedTypes = [];
+      renderPostTaskPlatformPick();
+      renderTypeChips();
+    };
+    item.innerHTML = '<div class="pp-hex">' + esc(platformMono(key)) + '</div>' + esc(platformName(key));
+    wrap.appendChild(item);
+  });
+}
+
+function renderTypeChips(){
+  const wrap = document.getElementById('pt-type-chips');
+  wrap.innerHTML = '';
+  if (!ptSelectedPlatform){
+    wrap.innerHTML = '<div style="color:var(--text-muted);font-size:12px;">আগে Platform বেছে নাও</div>';
+    return;
+  }
+
+  const rules = TASK_RULES[ptSelectedPlatform] || [];
+  rules.forEach(function(rule){
+    const type = rule[0];
+    const desc = rule[1];
+    const defaultReward = rule[2];
+
+    const chip = document.createElement('div');
+    chip.className = 'type-chip' + (ptSelectedTypes.indexOf(type) !== -1 ? ' selected' : '');
+    chip.innerHTML = esc(type) + ' <span style="opacity:.65">+' + defaultReward + ' honey</span>';
+    chip.title = desc;
+    chip.onclick = function(){
+      const idx = ptSelectedTypes.indexOf(type);
+      if (idx === -1) ptSelectedTypes.push(type);
+      else ptSelectedTypes.splice(idx,1);
+      renderTypeChips();
+    };
+    wrap.appendChild(chip);
+  });
+
+  const help = document.createElement('div');
+  help.style.cssText = 'width:100%;font-size:11px;color:var(--text-muted);margin-top:4px;';
+  help.textContent = 'Rule: ' + rules.map(function(r){ return r[0] + ' — ' + r[1]; }).join(' • ');
+  wrap.appendChild(help);
+}
+
+function updatePostCost(){
+  const qty = Number(document.getElementById('pt-qty').value) || 0;
+  const reward = Number(document.getElementById('pt-reward').value) || 0;
+  document.getElementById('pt-total').textContent = (qty * reward).toFixed(1);
+}
+
+async function submitPostTask(){
+  if (!ptSelectedPlatform){ alert('আগে Platform বেছে নাও।'); return; }
+  if (!ptSelectedTypes.length){ alert('আগে অন্তত একটা Task Type বেছে নাও।'); return; }
+  const title = document.getElementById('pt-title').value.trim();
+  const link = document.getElementById('pt-link').value.trim();
+  const description = document.getElementById('pt-desc').value.trim();
+  const quantity = Number(document.getElementById('pt-qty').value) || 0;
+  const rewardHoney = Number(document.getElementById('pt-reward').value) || 0;
+
+  if (!title || !link || !description || quantity <= 0 || rewardHoney <= 0){
+    alert('সব Task information ঠিকমতো পূরণ করো।'); return;
+  }
+
+  try {
+    const data = await api('post_user_task', {
+      platform: ptSelectedPlatform,
+      types: ptSelectedTypes,
+      title: title,
+      link: link,
+      description: description,
+      quantity: quantity,
+      rewardHoney: rewardHoney
+    });
+    if (data.user) state.user = Object.assign(state.user, data.user);
+    updateWalletUI();
+    alert('✅ Task pending হয়েছে। Admin approve করলে worker-দের Tasks-এ আসবে।');
+    document.getElementById('pt-title').value = '';
+    document.getElementById('pt-link').value = '';
+    document.getElementById('pt-desc').value = '';
+    await refreshState();
+    showScreen('tasks');
+  } catch(e){
+    alert(errorText(e));
+  }
+}
+
+const HONEY_PER_TAKA = 1;
+
+function copyText(elId){
+  const el = document.getElementById(elId);
+  if (!el) return;
+  const text = (el.value !== undefined ? el.value : el.textContent).trim();
+  if (navigator.clipboard) navigator.clipboard.writeText(text);
+}
+
+function updateDepositConvert(){
+  const taka = Number(document.getElementById('dep-amount').value) || 0;
+  const el = document.getElementById('dep-convert');
+  if (el) el.textContent = '= ' + (taka * Number(state.honeyPerTaka || HONEY_PER_TAKA)).toFixed(1) + ' honey';
+}
+function updateWithdrawConvert(){
+  const honey = Number(document.getElementById('wd-amount').value) || 0;
+  const rate = Number(state.honeyPerTaka || HONEY_PER_TAKA);
+  const el = document.getElementById('wd-convert');
+  if (el) el.textContent = '= ৳ ' + (honey / rate).toFixed(2);
+}
+
+async function submitDeposit(){
+  const amount = Number(document.getElementById('dep-amount').value) || 0;
+  const txid = document.getElementById('dep-txid').value.trim();
+  const sender = document.getElementById('dep-sender').value.trim();
+  if (amount <= 0){ alert('আগে সঠিক Amount দাও।'); return; }
+  if (!sender){ alert('তুমি যে নাম্বার থেকে পাঠিয়েছো সেটা দাও।'); return; }
+
+  try {
+    await api('submit_deposit', {
+      amountTaka: amount,
+      trxid: txid,
+      senderNumber: sender
+    });
+    alert('✅ Deposit request Admin-এর Telegram-এ গেছে। Confirm হলে honey যোগ হবে।');
+    document.getElementById('dep-amount').value = '';
+    document.getElementById('dep-txid').value = '';
+    document.getElementById('dep-sender').value = '';
+    await refreshState();
+    showScreen('home');
+  } catch(e){ alert(errorText(e)); }
+}
+
+async function submitWithdraw(){
+  const amount = Number(document.getElementById('wd-amount').value) || 0;
+  const bkash = document.getElementById('wd-address').value.trim();
+  if (amount <= 0){ alert('আগে সঠিক Amount দাও।'); return; }
+  if (!bkash){ alert('তোমার bKash নাম্বার দাও।'); return; }
+  const normalizedBkash = bkash.replace(/[\s-]/g, '');
+  if (!/^01[3-9]\d{9}$/.test(normalizedBkash)){
+    alert('সঠিক bKash নাম্বার দাও (01XXXXXXXXX)।');
+    return;
+  }
+
+  try {
+    const data = await api('submit_withdraw', { amountHoney: amount, bkashNumber: normalizedBkash });
+    if (data.user) state.user = Object.assign(state.user, data.user);
+    updateWalletUI();
+    alert('✅ Withdraw request Admin-এর Telegram-এ গেছে।');
+    document.getElementById('wd-amount').value = '';
+    document.getElementById('wd-address').value = '';
+    showScreen('home');
+  } catch(e){ alert(errorText(e)); }
+}
+
+async function refreshState(){
+  try {
+    let startParam = tg && tg.initDataUnsafe ? (tg.initDataUnsafe.start_param || '') : '';
+    // Fallback for a referral URL opened as a normal web URL.
+    if (!startParam) {
+      const qs = new URLSearchParams(window.location.search);
+      startParam = qs.get('startapp') || qs.get('start') || '';
+    }
+    const data = await api('get_state', { referredBy: startParam });
+    applyState(data);
+  } catch(e){
+    console.error(e);
+    const msg = errorText(e);
+    if (String(e.message) === 'invalid_init_data' || !initData()) {
+      alert(msg);
+    }
+  }
+}
+
+async function startApp(){
+  if (!initData()){
+    alert('এই app-টি Telegram Mini App হিসেবে খুলতে হবে।');
+    return;
+  }
+  await refreshState();
+}
+
+updatePostCost();
+startApp();
+</script>
+
+</body>
+</html>
