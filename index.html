@@ -828,6 +828,12 @@ if (tg) {
   tg.expand();
 }
 
+// Show Telegram name and referral link immediately, even before the backend response arrives.
+(function(){
+  const nameEl = document.getElementById('home-user-name');
+  if (nameEl) nameEl.textContent = getDisplayName();
+})();
+
 function showScreen(name){
   const screens = ['home','tasks','ref','history','posttask','taskdetail','deposit','withdraw'];
   screens.forEach(function(key){
@@ -931,29 +937,42 @@ function updateReferralUI(){
   if (earnedEl) earnedEl.textContent = Number.isFinite(bonus) ? money(count * bonus) : '—';
   const histRef = document.getElementById('history-ref-bonus');
   if (histRef) histRef.textContent = Number.isFinite(bonus) ? ('+' + money(bonus)) : '—';
-  if (linkEl && state.user.user_id) {
-    linkEl.value = 'https://t.me/' + BOT_USERNAME + '?startapp=' + encodeURIComponent(state.user.user_id);
+  const tgUser = getTelegramUser();
+  const referralUserId = state.user.user_id || tgUser.id || '';
+  if (linkEl && referralUserId) {
+    linkEl.value = 'https://t.me/' + BOT_USERNAME + '?startapp=' + encodeURIComponent(referralUserId);
   }
+}
+
+function getTelegramUser(){
+  return tg && tg.initDataUnsafe && tg.initDataUnsafe.user
+    ? tg.initDataUnsafe.user
+    : {};
+}
+
+function getDisplayName(){
+  const user = state.user || {};
+  const tgUser = getTelegramUser();
+  return (
+    user.full_name ||
+    [user.first_name, user.last_name].filter(Boolean).join(' ') ||
+    tgUser.first_name && [tgUser.first_name, tgUser.last_name].filter(Boolean).join(' ') ||
+    user.username ||
+    tgUser.username ||
+    'User'
+  );
 }
 
 function updateWalletUI(){
   const user = state.user || {};
-  const tgUser = tg && tg.initDataUnsafe ? (tg.initDataUnsafe.user || {}) : {};
-  const displayName =
-    user.full_name ||
-    [user.first_name, user.last_name].filter(Boolean).join(' ') ||
-    user.first_name ||
-    tgUser.first_name ||
-    user.username ||
-    tgUser.username ||
-    'User';
+  const tgUser = getTelegramUser();
 
   const nameEl = document.getElementById('home-user-name');
-  if (nameEl) nameEl.textContent = String(displayName);
+  if (nameEl) nameEl.textContent = getDisplayName();
 
   const balance = Number(user.balance || 0);
-  const earned = Number(state.user.total_earned || 0);
-  const refs = Number(state.user.referral_count || 0);
+  const earned = Number(user.total_earned || 0);
+  const refs = Number(user.referral_count || 0);
   const done = state.tasks.filter(function(t){ return t.completed; }).length;
 
   const ids = {
@@ -968,462 +987,9 @@ function updateWalletUI(){
     const el = document.getElementById(id);
     if (el) el.textContent = Number(ids[id]).toFixed(1).replace(/\.0$/, '');
   });
+
   updateDepositConvert();
   updateWithdrawConvert();
-}
-
-function platformName(key){
-  const names = {
-    ads:'Ads', telegram:'Telegram', facebook:'Facebook', instagram:'Instagram',
-    tiktok:'TikTok', gmail:'Gmail', youtube:'YouTube', whatsapp:'WhatsApp',
-    x:'X', discord:'Discord', linkedin:'LinkedIn', snapchat:'Snapchat'
-  };
-  return names[String(key || '').toLowerCase()] || String(key || 'Other');
-}
-function platformIcon(key){
-  const icons = {
-    ads:'📺', telegram:'📢', facebook:'📘', instagram:'📸', tiktok:'🎵',
-    gmail:'✉️', youtube:'▶️', whatsapp:'💬', x:'✖️', discord:'🎮',
-    linkedin:'💼', snapchat:'👻', other:'◈'
-  };
-  return icons[String(key || '').toLowerCase()] || '◈';
-}
-function platformMono(key){
-  const monos = {
-    ads:'AD', telegram:'T', facebook:'F', instagram:'IG', tiktok:'TT',
-    gmail:'G', youtube:'YT', whatsapp:'WA', x:'X', discord:'DC',
-    linkedin:'in', snapchat:'SC', other:'◈'
-  };
-  return monos[String(key || '').toLowerCase()] || '◈';
-}
-
-function normalizePlatform(t){
-  const allowed = ['ads','telegram','facebook','instagram','tiktok','gmail','youtube','whatsapp','x','discord','linkedin','snapchat'];
-  let key = String(t.platform || '').trim().toLowerCase();
-  if (allowed.indexOf(key) !== -1) return key;
-
-  const text = (String(t.type || '') + ' ' + String(t.title || '')).toLowerCase();
-  if (text.indexOf('ad') !== -1 || text.indexOf('watch') !== -1) return 'ads';
-  if (text.indexOf('telegram') !== -1 || text.indexOf('channel') !== -1 || text.indexOf('group') !== -1) return 'telegram';
-  if (text.indexOf('facebook') !== -1) return 'facebook';
-  if (text.indexOf('instagram') !== -1) return 'instagram';
-  if (text.indexOf('tiktok') !== -1) return 'tiktok';
-  if (text.indexOf('gmail') !== -1 || text.indexOf('email') !== -1 || text.indexOf('verify') !== -1) return 'gmail';
-  if (text.indexOf('youtube') !== -1) return 'youtube';
-  if (text.indexOf('whatsapp') !== -1) return 'whatsapp';
-  if (text.indexOf('discord') !== -1) return 'discord';
-  if (text.indexOf('linkedin') !== -1) return 'linkedin';
-  if (text.indexOf('snapchat') !== -1) return 'snapchat';
-  if (text.indexOf('twitter') !== -1 || text.indexOf('retweet') !== -1) return 'x';
-  return 'other';
-}
-
-function groupedTasks(){
-  const groups = {};
-  state.tasks.forEach(function(t){
-    const key = normalizePlatform(t);
-    if (!groups[key]) groups[key] = [];
-    t._platform = key;
-    groups[key].push(t);
-  });
-  return groups;
-}
-
-const PLATFORM_CATALOG = [
-  ['ads','Ads'], ['telegram','Telegram'], ['facebook','Facebook'],
-  ['instagram','Instagram'], ['tiktok','TikTok'], ['gmail','Gmail'],
-  ['youtube','YouTube'], ['whatsapp','WhatsApp'], ['x','X'],
-  ['discord','Discord'], ['linkedin','LinkedIn'], ['snapchat','Snapchat']
-];
-
-function renderPlatformGrid(){
-  const grid = document.getElementById('platform-grid');
-  if (!grid) return;
-  grid.innerHTML = '';
-
-  const groups = groupedTasks();
-  const adsTasks = groups.ads || [];
-  const adsDone = adsTasks.filter(function(t){ return t.completed; }).length;
-
-  // Demo rule: exactly 3 Ads must be completed before other platforms unlock.
-  // After all 3 are done, Ads locks again until the backend's 24h cycle resets them.
-  const adsFinished = adsTasks.length >= 3 && adsDone >= 3;
-
-  PLATFORM_CATALOG.forEach(function(pair){
-    const key = pair[0], name = pair[1], list = groups[key] || [];
-    const locked = key === 'ads' ? adsFinished : !adsFinished;
-    const card = document.createElement('div');
-    card.className = 'platform-card' + (locked ? ' locked' : '');
-
-    card.onclick = function(){
-      if (locked) {
-        if (key === 'ads') {
-          alert('🔒 আজকের ৩টা Ads দেখা শেষ। ২৪ ঘণ্টা পর আবার Ads দেখতে পারবে।');
-        } else {
-          alert('🔒 আগে Ads-এর ৩টা বিজ্ঞাপন দেখো, তারপর এই platform unlock হবে।');
-        }
-        return;
-      }
-      openPlatform(key);
-    };
-
-    const doneCount = list.filter(function(t){ return t.completed; }).length;
-    const countText = key === 'ads' ? (doneCount + '/3') : (doneCount + '/' + list.length);
-
-    card.innerHTML =
-      '<div class="p-hex">' + esc(locked && key === 'ads' ? '🔒' : platformMono(key)) + '</div>' +
-      '<div class="p-name">' + esc(name) + '</div>' +
-      '<div class="p-count">' + (locked ? 'Locked' : countText) + '</div>';
-    grid.appendChild(card);
-  });
-
-  const banner = document.getElementById('lock-banner');
-  if (banner) {
-    if (adsFinished) {
-      banner.textContent = '✅ আজকের ৩টা Ads দেখা হয়ে গেছে — বাকি সব task unlock! Ads আবার ২৪ ঘণ্টা পর খুলবে।';
-    } else {
-      banner.textContent = '🔒 আগে Ads-এর ৩টা বিজ্ঞাপন দেখো (honey নেই, শুধু view গণনা হবে) — তাহলেই বাকি সব task unlock হবে।';
-    }
-  }
-}
-
-function openPlatform(key){
-  const groups = groupedTasks();
-  const list = groups[key] || [];
-  const adsTasks = groups.ads || [];
-  const adsDone = adsTasks.filter(function(t){ return t.completed; }).length;
-  const adsFinished = adsTasks.length >= 3 && adsDone >= 3;
-
-  if (key === 'ads' && adsFinished) {
-    alert('🔒 আজকের ৩টা Ads দেখা শেষ। ২৪ ঘণ্টা পর আবার Ads দেখতে পারবে।');
-    return;
-  }
-  if (key !== 'ads' && !adsFinished) {
-    alert('🔒 আগে Ads-এর ৩টা বিজ্ঞাপন দেখো, তারপর এই platform unlock হবে।');
-    return;
-  }
-
-  currentPlatform = key;
-  document.getElementById('platform-detail-title').textContent = platformName(key);
-  renderTaskList(list);
-  document.getElementById('platform-grid-view').style.display = 'none';
-  document.getElementById('platform-detail-view').style.display = 'block';
-}
-
-function renderTaskList(list){
-  const wrap = document.getElementById('platform-task-list');
-  wrap.innerHTML = '';
-  if (!list.length) {
-    wrap.innerHTML = '<div style="padding:20px;color:var(--text-muted);text-align:center;">এই platform-এ এখন কোনো live task নেই।</div>';
-    return;
-  }
-
-  list.forEach(function(t){
-    const card = document.createElement('div');
-    card.className = 'task-card';
-    const platform = t._platform || normalizePlatform(t);
-    const isAds = platform === 'ads';
-    const isTelegram = platform === 'telegram';
-
-    let button;
-    if (t.completed) {
-      button = '<button class="claim-btn disabled">Done</button>';
-    } else if (t.pending) {
-      button = '<button class="claim-btn disabled" style="color:var(--honey);border-color:var(--honey);">Pending</button>';
-    } else if (isAds) {
-      button = '<button class="claim-btn" onclick="watchRealTask(\'' + esc(t.task_id) + '\')">Watch</button>';
-    } else if (isTelegram) {
-      button = '<button class="claim-btn" onclick="verifyRealTelegramTask(\'' + esc(t.task_id) + '\')">Verify</button>';
-    } else {
-      button = '<button class="claim-btn" onclick="openTaskDetailById(\'' + esc(t.task_id) + '\')">Details</button>';
-    }
-
-    const rewardLine = isAds
-      ? '<div class="pts" style="color:var(--text-muted);">👁️ শুধু view গণনা হবে — honey নেই</div>'
-      : '<div class="pts">+' + money(t.points) + ' honey</div>';
-
-    card.innerHTML =
-      '<div class="task-hex' + (t.completed ? ' done' : '') + '">' +
-        (t.completed ? '✓' : (t.pending ? '⏳' : esc(platformIcon(platform)))) +
-      '</div>' +
-      '<div class="task-body">' +
-        '<div class="title">' + esc(t.title) + '</div>' +
-        '<div class="desc">' + esc(t.description || t.type || '') + '</div>' +
-        rewardLine +
-      '</div>' + button;
-    wrap.appendChild(card);
-  });
-}
-
-function getTaskById(id){
-  return state.tasks.find(function(t){ return String(t.task_id) === String(id); });
-}
-
-function openTaskLink(t){
-  if (t && t.target) window.open(t.target, '_blank');
-}
-
-async function watchRealTask(taskId){
-  const t = getTaskById(taskId);
-  if (!t) return;
-  if (t.target) window.open(t.target, '_blank');
-  try {
-    await api('claim_task', { taskId: taskId });
-    await refreshState();
-  } catch(e){ alert(errorText(e)); }
-}
-
-async function verifyRealTelegramTask(taskId){
-  const t = getTaskById(taskId);
-  if (!t) return;
-  if (t.target) window.open(t.target, '_blank');
-  try {
-    await api('claim_task', { taskId: taskId });
-    await refreshState();
-  } catch(e){ alert(errorText(e)); }
-}
-
-function getTaskById(id){
-  return state.tasks.find(function(t){ return String(t.task_id) === String(id); });
-}
-
-function stepsForTask(title){
-  const T = String(title || '').toLowerCase();
-  if (T.indexOf('watch ad') !== -1) return ['বিজ্ঞাপনের link নতুন tab-এ খুলো','বিজ্ঞাপনটি সম্পূর্ণ দেখো','প্রয়োজনীয় proof রাখো','Description সহ proof submit করো'];
-  if (T.indexOf('follow') !== -1 || T.indexOf('subscribe') !== -1 || T.indexOf('join') !== -1 || T.indexOf('add friend') !== -1)
-    return ['লিংকে ট্যাপ করে page/account/group/channel-এ যাও','Follow / Subscribe / Join / Add করো','প্রমাণ হিসেবে screenshot নাও','Description সহ proof submit করো'];
-  if (T.indexOf('like') !== -1)
-    return ['লিংকে গিয়ে post/video খুঁজে বের করো','Like করো','প্রমাণ হিসেবে screenshot নাও','Description সহ proof submit করো'];
-  if (T.indexOf('comment') !== -1)
-    return ['লিংকে গিয়ে post/video খুঁজে বের করো','Comment করো','প্রমাণ হিসেবে screenshot নাও','Description সহ proof submit করো'];
-  if (T.indexOf('share') !== -1 || T.indexOf('retweet') !== -1)
-    return ['লিংকে গিয়ে post খুঁজে বের করো','Share / Retweet করো','প্রমাণ হিসেবে screenshot নাও','Description সহ proof submit করো'];
-  if (T.indexOf('verify email') !== -1)
-    return ['দেওয়া email verification instruction follow করো','Verification complete করো','প্রমাণ হিসেবে screenshot নাও','Description সহ proof submit করো'];
-  return ['Task-এর link খুলে instruction অনুযায়ী কাজটি করো','কাজ শেষ করার প্রমাণ রাখো','Description লিখো','Submit for review করো'];
-}
-
-function openTaskDetailById(taskId){
-  const t = getTaskById(taskId);
-  if (!t) return;
-  currentTask = t;
-  document.getElementById('td-hex').textContent = platformMono(t.platform);
-  document.getElementById('td-title').textContent = t.title || 'Task';
-  document.getElementById('td-sub').textContent = platformName(t.platform);
-  document.getElementById('td-reward').textContent = '+' + money(t.points) + ' honey';
-
-  const steps = document.getElementById('td-steps');
-  steps.innerHTML = '';
-  if (t.description) {
-    const d = document.createElement('div');
-    d.className = 'step-item';
-    d.innerHTML = '<div class="num">i</div><div>' + esc(t.description) + '</div>';
-    steps.appendChild(d);
-  }
-  stepsForTask(t.title).forEach(function(s,i){
-    const row = document.createElement('div');
-    row.className = 'step-item';
-    row.innerHTML = '<div class="num">' + (i+1) + '</div><div>' + esc(s) + '</div>';
-    steps.appendChild(row);
-  });
-  document.getElementById('td-desc').value = '';
-  document.getElementById('td-screenshot').value = '';
-  const linkBtn = document.getElementById('td-open-link');
-  if (linkBtn) {
-    linkBtn.style.display = t.target ? 'block' : 'none';
-    linkBtn.onclick = function(){ openTaskLink(t); };
-  }
-  showScreen('taskdetail');
-}
-
-async function claimBuiltInTask(taskId){
-  const t = getTaskById(taskId);
-  if (!t) return;
-  if ((t._platform || normalizePlatform(t)) === 'ads') return watchRealTask(taskId);
-  if ((t._platform || normalizePlatform(t)) === 'telegram') return verifyRealTelegramTask(taskId);
-  return openTaskDetailById(taskId);
-}
-
-async function submitTaskProof(){
-  if (!currentTask) return;
-  const desc = document.getElementById('td-desc').value.trim();
-  if (!desc){ alert('আগে Description লিখো।'); return; }
-
-  try {
-    await api('submit_task_proof', {
-      taskId: currentTask.task_id,
-      description: desc
-    });
-    alert('✅ Proof জমা হয়েছে। Task owner-এর Telegram-এ review যাবে।');
-    currentTask = null;
-    await refreshState();
-    showScreen('tasks');
-  } catch(e){
-    alert(errorText(e));
-  }
-}
-
-function closeTaskDetail(){
-  currentTask = null;
-  showScreen('tasks');
-}
-
-function closePlatform(){
-  document.getElementById('platform-detail-view').style.display = 'none';
-  document.getElementById('platform-grid-view').style.display = 'block';
-  renderPlatformGrid();
-}
-
-/* Original task rules from the demo — kept intact for Post Task */
-const TASK_RULES = {
-  ads: [
-    ['Watch Ad','বিজ্ঞাপনটি দেখো (নতুন ট্যাবে খুলবে)',1],
-  ],
-  telegram: [
-    ['Join Channel','আমাদের চ্যানেলে join করো',5],
-    ['Join Group','গ্রুপে join করো',3],
-  ],
-  facebook: [
-    ['Follow Page','Facebook পেজ ফলো করো',3],
-    ['Like Page','পেজ লাইক করো',2],
-    ['Comment on Post','পোস্টে কমেন্ট করো',2],
-    ['Share Post','পোস্ট শেয়ার করো',3],
-  ],
-  instagram: [
-    ['Follow Account','Instagram এ ফলো করো',3],
-    ['Like Post','পোস্টে লাইক করো',2],
-    ['Comment','পোস্টে কমেন্ট করো',2],
-  ],
-  tiktok: [
-    ['Follow Account','TikTok এ ফলো করো',3],
-    ['Like Video','ভিডিও লাইক করো',2],
-  ],
-  gmail: [
-    ['Verify Email','Gmail দিয়ে verify করো',2],
-  ],
-  youtube: [
-    ['Subscribe Channel','চ্যানেল subscribe করো',4],
-    ['Like Video','ভিডিওতে লাইক করো',2],
-    ['Comment on Video','ভিডিওতে কমেন্ট করো',2],
-  ],
-  whatsapp: [
-    ['Join Channel','WhatsApp চ্যানেলে join করো',3],
-  ],
-  x: [
-    ['Follow Account','X এ ফলো করো',3],
-    ['Retweet Post','পোস্ট retweet করো',2],
-  ],
-  discord: [
-    ['Join Server','Discord সার্ভারে join করো',3],
-  ],
-  linkedin: [
-    ['Follow Page','LinkedIn পেজ ফলো করো',3],
-    ['Like Post','পোস্টে লাইক করো',2],
-  ],
-  snapchat: [
-    ['Add Friend','Snapchat এ add করো',2],
-  ]
-};
-
-function renderPostTaskPlatformPick(){
-  const wrap = document.getElementById('pt-platform-pick');
-  wrap.innerHTML = '';
-  Object.keys(TASK_RULES).forEach(function(key){
-    const item = document.createElement('div');
-    item.className = 'pp-item' + (ptSelectedPlatform === key ? ' selected' : '');
-    item.onclick = function(){
-      ptSelectedPlatform = key;
-      ptSelectedTypes = [];
-      renderPostTaskPlatformPick();
-      renderTypeChips();
-    };
-    item.innerHTML = '<div class="pp-hex">' + esc(platformMono(key)) + '</div>' + esc(platformName(key));
-    wrap.appendChild(item);
-  });
-}
-
-function renderTypeChips(){
-  const wrap = document.getElementById('pt-type-chips');
-  wrap.innerHTML = '';
-  if (!ptSelectedPlatform){
-    wrap.innerHTML = '<div style="color:var(--text-muted);font-size:12px;">আগে Platform বেছে নাও</div>';
-    return;
-  }
-
-  const rules = TASK_RULES[ptSelectedPlatform] || [];
-  rules.forEach(function(rule){
-    const type = rule[0];
-    const desc = rule[1];
-    const defaultReward = rule[2];
-
-    const chip = document.createElement('div');
-    chip.className = 'type-chip' + (ptSelectedTypes.indexOf(type) !== -1 ? ' selected' : '');
-    chip.innerHTML = esc(type) + ' <span style="opacity:.65">+' + defaultReward + ' honey</span>';
-    chip.title = desc;
-    chip.onclick = function(){
-      const idx = ptSelectedTypes.indexOf(type);
-      if (idx === -1) ptSelectedTypes.push(type);
-      else ptSelectedTypes.splice(idx,1);
-      renderTypeChips();
-    };
-    wrap.appendChild(chip);
-  });
-
-  const help = document.createElement('div');
-  help.style.cssText = 'width:100%;font-size:11px;color:var(--text-muted);margin-top:4px;';
-  help.textContent = 'Rule: ' + rules.map(function(r){ return r[0] + ' — ' + r[1]; }).join(' • ');
-  wrap.appendChild(help);
-}
-
-function updatePostCost(){
-  const qty = Number(document.getElementById('pt-qty').value) || 0;
-  const reward = Number(document.getElementById('pt-reward').value) || 0;
-  document.getElementById('pt-total').textContent = (qty * reward).toFixed(1);
-}
-
-async function submitPostTask(){
-  if (!ptSelectedPlatform){ alert('আগে Platform বেছে নাও।'); return; }
-  if (!ptSelectedTypes.length){ alert('আগে অন্তত একটা Task Type বেছে নাও।'); return; }
-  const title = document.getElementById('pt-title').value.trim();
-  const link = document.getElementById('pt-link').value.trim();
-  const description = document.getElementById('pt-desc').value.trim();
-  const quantity = Number(document.getElementById('pt-qty').value) || 0;
-  const rewardHoney = Number(document.getElementById('pt-reward').value) || 0;
-
-  if (!title || !link || !description || quantity <= 0 || rewardHoney <= 0){
-    alert('সব Task information ঠিকমতো পূরণ করো।'); return;
-  }
-
-  try {
-    const data = await api('post_user_task', {
-      platform: ptSelectedPlatform,
-      types: ptSelectedTypes,
-      title: title,
-      link: link,
-      description: description,
-      quantity: quantity,
-      rewardHoney: rewardHoney
-    });
-    if (data.user) state.user = Object.assign(state.user, data.user);
-    updateWalletUI();
-    alert('✅ Task pending হয়েছে। Admin approve করলে worker-দের Tasks-এ আসবে।');
-    document.getElementById('pt-title').value = '';
-    document.getElementById('pt-link').value = '';
-    document.getElementById('pt-desc').value = '';
-    await refreshState();
-    showScreen('tasks');
-  } catch(e){
-    alert(errorText(e));
-  }
-}
-
-const HONEY_PER_TAKA = 1;
-
-function copyText(elId){
-  const el = document.getElementById(elId);
-  if (!el) return;
-  const text = (el.value !== undefined ? el.value : el.textContent).trim();
-  if (navigator.clipboard) navigator.clipboard.writeText(text);
 }
 
 function updateDepositConvert(){
