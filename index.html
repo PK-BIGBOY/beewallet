@@ -1155,40 +1155,65 @@ function renderPlatformGrid(){
   const grid=document.getElementById('platform-grid');
   if(!grid) return;
   grid.innerHTML='';
+
   const groups=groupedTasks();
   const ads=groups.ads||[];
   const adsDone=ads.filter(function(t){return t.completed;}).length;
   const unlocked=ads.length>=3 && adsDone>=3;
 
+  // Always show the full platform list. Platforms without active tasks remain
+  // visible and locked instead of disappearing from the Tasks page.
   const keys=['ads','telegram','facebook','instagram','tiktok','youtube','gmail','whatsapp','x','discord','linkedin','snapchat','other'];
-  const present=Object.keys(groups).filter(function(k){return keys.indexOf(k)===-1;});
-  keys.concat(present).forEach(function(key){
+
+  keys.forEach(function(key){
     const list=groups[key]||[];
-    if(!list.length) return;
-    const locked=key==='ads' ? unlocked : !unlocked;
+    const locked=(key==='ads') ? unlocked : !unlocked;
     const meta=PLATFORM_META[key]||{name:key,mono:'OT',icon:'•'};
     const done=list.filter(function(t){return t.completed;}).length;
+
     const card=document.createElement('div');
     card.className='platform-card'+(locked?' locked':'');
     card.onclick=function(){
       if(locked){
         alert(key==='ads'
-          ? '🔒 আজকের ৩টা Ads শেষ। ২৪ ঘণ্টা পর আবার Ads খুলবে।'
-          : '🔒 আগে Ads-এর ৩টা task complete করো।');
+          ? '🔒 আজকের ৩টা Ads complete হয়ে গেছে। ২৪ ঘণ্টা পর আবার Ads খুলবে।'
+          : '🔒 আগে Ads-এর ৩টা task complete করো, তারপর '+meta.name+' unlock হবে।');
+        return;
+      }
+      if(!list.length){
+        alert('এই platform-এ এখন কোনো active task নেই।');
         return;
       }
       openPlatform(key);
     };
-    card.innerHTML='<div class="p-hex">'+(locked?'🔒':esc(meta.mono))+'</div>'+
+
+    card.innerHTML=
+      '<div class="p-hex">'+(locked?'🔒':esc(meta.mono))+'</div>'+
       '<div class="p-name">'+esc(meta.name)+'</div>'+
-      '<div class="p-count">'+(locked?'Locked':(done+'/'+list.length))+'</div>';
+      '<div class="p-count">'+(
+        locked ? 'Locked' :
+        list.length ? (done+'/'+list.length) : 'No tasks'
+      )+'</div>';
+
+    grid.appendChild(card);
+  });
+
+  // Also show any custom platform returned by the Sheet.
+  Object.keys(groups).forEach(function(key){
+    if(keys.indexOf(key)!==-1) return;
+    const list=groups[key]||[];
+    if(!list.length) return;
+    const card=document.createElement('div');
+    card.className='platform-card locked';
+    card.innerHTML='<div class="p-hex">🔒</div><div class="p-name">'+esc(platformLabel(key))+'</div><div class="p-count">Locked</div>';
+    card.onclick=function(){ alert('🔒 আগে Ads-এর ৩টা task complete করো।'); };
     grid.appendChild(card);
   });
 
   const banner=document.getElementById('lock-banner');
   if(banner) banner.textContent=unlocked
-    ? '✅ Ads-এর ৩টা complete — বাকি সব task unlock। Ads ২৪ ঘণ্টা পর আবার খুলবে।'
-    : '🔒 আগে Ads-এর ৩টা task complete করো — তারপর Facebook, Instagram, Telegramসহ বাকি task unlock হবে।';
+    ? '✅ Ads-এর ৩টা complete — Facebook, Instagram, Telegramসহ বাকি platform unlock। Ads ২৪ ঘণ্টা পর আবার খুলবে।'
+    : '🔒 আগে Ads-এর ৩টা task complete করো — তারপর Facebook, Instagram, Telegramসহ বাকি platform unlock হবে।';
 }
 
 function openPlatform(key){
