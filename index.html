@@ -6,6 +6,7 @@
 <title>Bee Wallet</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Manrope:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
+<script src='//libtl.com/sdk.js' data-zone='11552484' data-sdk='show_11552484'></script>
 
 <style>
 :root{
@@ -436,6 +437,10 @@ cursor:pointer;
 font-size:11px;
 font-weight:600
 }
+.platform-pick .pp-item.selected{
+border-color:var(--honey);
+background:rgba(242,169,60,.1)
+}
 .type-chips{display:flex;flex-wrap:wrap;gap:8px}
 .type-chip{
 background:var(--card);
@@ -491,6 +496,7 @@ font-size:15px;
 cursor:pointer;
 font-family:'Manrope',sans-serif
 }
+.submit-post-btn:disabled{opacity:.6;cursor:default}
 .addr-box{
 background:var(--card);
 border:1px solid var(--card-border);
@@ -526,6 +532,39 @@ font-size:11.5px;
 color:#f0a790;
 line-height:1.5;
 margin-bottom:16px
+}
+.td-card{
+background:linear-gradient(165deg,#332612,#241a10);
+border:1px solid var(--card-border);
+border-radius:16px;
+padding:16px;
+display:flex;
+align-items:center;
+justify-content:space-between;
+margin-bottom:20px
+}
+.td-top{display:flex;align-items:center;gap:12px}
+.td-hex{
+width:42px;height:42px;
+clip-path:polygon(25% 6%,75% 6%,100% 50%,75% 94%,25% 94%,0 50%);
+background:linear-gradient(155deg,var(--honey-light),var(--honey-deep));
+display:flex;align-items:center;justify-content:center;
+font-family:'IBM Plex Mono',monospace;font-weight:800;font-size:13px;color:#241a08
+}
+.td-title{font-weight:700;font-size:14.5px}
+.td-sub{font-size:11.5px;color:var(--text-muted);margin-top:2px}
+.td-reward{font-family:'IBM Plex Mono',monospace;font-weight:600;font-size:14px;color:var(--sage)}
+.step-item{
+display:flex;align-items:flex-start;gap:10px;
+background:var(--card);border:1px solid var(--card-border);
+border-radius:12px;padding:10px 12px;font-size:12.5px;line-height:1.5;
+margin-bottom:8px
+}
+.step-num{
+flex-shrink:0;width:20px;height:20px;border-radius:6px;
+background:rgba(242,169,60,.16);color:var(--honey-light);
+display:flex;align-items:center;justify-content:center;
+font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:700
 }
 .bottomnav{
 position:fixed;
@@ -566,6 +605,90 @@ font-size:10px
 .navbtn.active .icon{
 background:linear-gradient(155deg,var(--honey-light),var(--honey-deep))
 }
+
+/* ---- Ad Viewer Modal (in-app, timed) ---- */
+.ad-modal-overlay{
+display:none;
+position:fixed;
+inset:0;
+background:rgba(10,7,3,.92);
+z-index:500;
+flex-direction:column;
+padding:14px;
+}
+.ad-modal-overlay.active{display:flex}
+.ad-modal-header{
+display:flex;
+align-items:center;
+justify-content:space-between;
+padding:4px 4px 12px;
+color:var(--text)
+}
+.ad-modal-title{
+font-family:'Fraunces',serif;
+font-weight:600;
+font-size:15px
+}
+.ad-modal-timer{
+font-family:'IBM Plex Mono',monospace;
+font-weight:600;
+font-size:14px;
+color:var(--honey-light);
+background:rgba(242,169,60,.12);
+border:1px solid var(--card-border);
+border-radius:20px;
+padding:5px 12px;
+min-width:64px;
+text-align:center
+}
+.ad-modal-frame-wrap{
+flex:1;
+border-radius:16px;
+overflow:hidden;
+background:#000;
+border:1px solid var(--card-border);
+position:relative
+}
+.ad-modal-frame-wrap iframe{
+width:100%;
+height:100%;
+border:none
+}
+.ad-modal-footer{
+padding-top:14px;
+display:flex;
+gap:10px
+}
+.ad-modal-btn{
+flex:1;
+border:none;
+padding:14px 6px;
+border-radius:13px;
+font-weight:700;
+font-size:13.5px;
+cursor:pointer;
+font-family:'Manrope',sans-serif
+}
+.ad-modal-btn.cancel{
+background:rgba(255,255,255,.06);
+color:var(--text-muted);
+border:1px solid var(--card-border)
+}
+.ad-modal-btn.claim{
+background:linear-gradient(155deg,var(--honey-light),var(--honey-deep));
+color:#241a08
+}
+.ad-modal-btn.claim:disabled{
+opacity:.4;
+cursor:not-allowed;
+filter:grayscale(.3)
+}
+.ad-modal-note{
+font-size:11px;
+color:var(--text-muted);
+text-align:center;
+padding-top:8px
+}
 </style>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 </head>
@@ -585,6 +708,7 @@ background:linear-gradient(155deg,var(--honey-light),var(--honey-deep))
 
 <div id="screen-home" class="screen active">
 <div style="margin:4px 2px 14px;">
+<div style="font-size:11px;letter-spacing:0.06em;text-transform:uppercase;color:var(--text-muted);font-weight:700;">Welcome</div>
 <div id="home-user-name" style="font-size:20px;font-weight:800;color:var(--honey-light);margin-top:2px;">User</div>
 </div>
 
@@ -611,7 +735,7 @@ background:linear-gradient(155deg,var(--honey-light),var(--honey-deep))
 <div id="screen-tasks" class="screen">
 <div id="platform-grid-view">
 <div class="tasks-header">
-<div class="section-title" style="margin:0;"><span class="eyebrow">12 platform</span> Select platform</div>
+<div class="section-title" style="margin:0;"><span class="eyebrow" id="platform-count-label">0 platform</span> Select platform</div>
 <button class="post-task-btn" onclick="showScreen('posttask')">+ Post Task</button>
 </div>
 <div class="lock-banner" id="lock-banner"></div>
@@ -654,7 +778,7 @@ background:linear-gradient(155deg,var(--honey-light),var(--honey-deep))
 <h2>History</h2>
 </div>
 <div class="txn-list" id="txn-list">
-<div style="text-align:center;color:var(--text-muted);padding:30px 10px;font-size:12px;">No transaction history yet.</div>
+<div style="text-align:center;color:var(--text-muted);padding:30px 10px;font-size:12px;">Loading...</div>
 </div>
 </main>
 </div>
@@ -672,7 +796,7 @@ background:linear-gradient(155deg,var(--honey-light),var(--honey-deep))
 </div>
 
 <div class="field">
-<label>Task Type</label>
+<label>Task Type (একাধিক বেছে নেওয়া যাবে)</label>
 <div class="type-chips" id="pt-type-chips">
 <div style="color:var(--text-muted);font-size:12px;">আগে Platform বেছে নাও</div>
 </div>
@@ -707,7 +831,7 @@ background:linear-gradient(155deg,var(--honey-light),var(--honey-deep))
 <div class="cost-summary">
 <div class="label">Total Cost</div>
 <div class="amt"><span id="pt-total">—</span> <span class="unit">honey</span></div>
-<div class="note">তোমার balance থেকে কাটা হবে</div>
+<div class="note">তোমার balance থেকে কাটা হবে — Admin approve করার পর task সবাই দেখতে পাবে</div>
 </div>
 
 <button class="submit-post-btn" onclick="submitPostTask()">Post Task</button>
@@ -734,10 +858,11 @@ background:linear-gradient(155deg,var(--honey-light),var(--honey-deep))
 
 <div class="field">
 <label>কীভাবে করবে</label>
-<div class="steps-list" id="td-steps"></div>
+<div id="td-steps"></div>
 <button class="submit-post-btn" id="td-open-link" style="margin-top:10px;">Open Task Link</button>
 </div>
 
+<div id="td-proof-fields">
 <div class="field">
 <label>Description</label>
 <textarea id="td-desc" placeholder="তুমি কীভাবে task টি সম্পন্ন করেছো লিখো"></textarea>
@@ -747,8 +872,9 @@ background:linear-gradient(155deg,var(--honey-light),var(--honey-deep))
 <label>প্রমাণ (Screenshot) — ঐচ্ছিক</label>
 <input type="file" id="td-screenshot" accept="image/*" multiple>
 </div>
+</div>
 
-<button class="submit-post-btn" onclick="submitTaskProof()">Submit for Review</button>
+<button class="submit-post-btn" id="td-submit-btn" onclick="submitTaskProof()">Submit for Review</button>
 </main>
 </div>
 
@@ -783,11 +909,6 @@ background:linear-gradient(155deg,var(--honey-light),var(--honey-deep))
 <div class="field">
 <label>তুমি যে নাম্বার থেকে পাঠিয়েছো</label>
 <input type="text" id="dep-sender" placeholder="তোমার bKash নাম্বার">
-</div>
-
-<div class="field">
-<label>প্রমাণ (Screenshot) — ঐচ্ছিক</label>
-<input type="file" id="dep-screenshot" accept="image/*">
 </div>
 
 <button class="submit-post-btn" onclick="submitDeposit()">Submit Deposit</button>
@@ -828,1203 +949,885 @@ background:linear-gradient(155deg,var(--honey-light),var(--honey-deep))
 <button class="navbtn" id="nav-tasks" onclick="showScreen('tasks')"><div class="icon">✓</div>Tasks</button>
 <button class="navbtn" id="nav-ref" onclick="showScreen('ref')"><div class="icon">⚑</div>Referrals</button>
 </div>
+
+<div class="ad-modal-overlay" id="ad-modal-overlay">
+<div class="ad-modal-header">
+<div class="ad-modal-title">🐝 Ad দেখো</div>
+<div class="ad-modal-timer" id="ad-modal-timer">00:30</div>
+</div>
+<div class="ad-modal-frame-wrap">
+<iframe id="ad-modal-iframe" src="about:blank" referrerpolicy="no-referrer"></iframe>
+</div>
+<div class="ad-modal-note" style="padding-top:10px;">
+Ad এখানে load না হলে <a href="javascript:void(0)" onclick="openAdExternally()" style="color:var(--honey-light);font-weight:700;">এখানে ক্লিক করে নতুন ট্যাবে খোলো</a> — টাইমার এদিকে চলতেই থাকবে।
+</div>
+<div class="ad-modal-footer">
+<button class="ad-modal-btn cancel" onclick="cancelAdView()">বাতিল</button>
+<button class="ad-modal-btn claim" id="ad-modal-claim-btn" disabled onclick="claimAdView()">অপেক্ষা করো...</button>
+</div>
+<div class="ad-modal-note">৩০ সেকেন্ড পূর্ণ হওয়ার আগে বন্ধ করলে গণনা হবে না।</div>
+</div>
 </div>
 
 <script>
-const API_URL='https://script.google.com/macros/s/AKfycbxRByEkEEjZ_EjK9Kc7X1b_l-3RS9MxPCz8G6j_61kiLMLTFq0yd4MRsDg1-MXSI6MuEA/exec';
-const BOT_USERNAME='beewalletmicrotask_bot';
+/* ============================================================
+   CONFIG
+   ============================================================ */
+const API_URL = 'https://script.google.com/macros/s/AKfycbxRByEkEEjZ_EjK9Kc7X1b_l-3RS9MxPCz8G6j_61kiLMLTFq0yd4MRsDg1-MXSI6MuEA/exec';
+const BOT_USERNAME = 'beewalletmicrotask_bot';
 
-let state={
-user:{},
-tasks:[],
-honeyPerTaka:1,
-referralBonus:null,
-depositBkashNumber:''
+/* platform metadata for icons/labels shown in the grid — the actual
+   list of platforms that appear is driven by whatever `platform` values
+   exist in your Tasks/UserTasks sheet rows, not this list. This is just
+   look-and-feel per known platform key. */
+const PLATFORM_META = {
+  ads:       { name: 'Ads',       mono: 'AD' },
+  telegram:  { name: 'Telegram',  mono: 'T'  },
+  facebook:  { name: 'Facebook',  mono: 'F'  },
+  instagram: { name: 'Instagram', mono: 'IG' },
+  tiktok:    { name: 'TikTok',    mono: 'TT' },
+  gmail:     { name: 'Gmail',     mono: 'G'  },
+  youtube:   { name: 'YouTube',   mono: 'YT' },
+  whatsapp:  { name: 'WhatsApp',  mono: 'WA' },
+  x:         { name: 'X',         mono: 'X'  },
+  discord:   { name: 'Discord',   mono: 'DC' },
+  linkedin:  { name: 'LinkedIn',  mono: 'in' },
+  snapchat:  { name: 'Snapchat',  mono: 'SC' },
+  other:     { name: 'Other',     mono: '?'  }
 };
 
-let currentTask=null;
-let currentPlatform=null;
-let ptSelectedPlatform=null;
-let ptSelectedTypes=[];
+let state = {
+  user: {},
+  tasks: [],
+  honeyPerTaka: 1,
+  referralBonus: 0,
+  depositBkashNumber: '',
+  adsLink: ''
+};
 
-const tg=window.Telegram&&window.Telegram.WebApp?window.Telegram.WebApp:null;
+let currentTask = null;
+let currentPlatform = null;
+let ptSelectedPlatform = null;
+let ptSelectedTypes = [];
 
-if(tg){
-tg.ready();
-tg.expand();
+const tg = (window.Telegram && window.Telegram.WebApp) ? window.Telegram.WebApp : null;
+if (tg) { tg.ready(); tg.expand(); }
+
+function initData(){ return tg && tg.initData ? tg.initData : ''; }
+
+/* ============================================================
+   API HELPER
+   ============================================================ */
+async function api(action, extra){
+  const body = Object.assign({ action: action, initData: initData() }, extra || {});
+  const res = await fetch(API_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+    body: JSON.stringify(body)
+  });
+  const data = await res.json();
+  if (!data.ok) throw new Error(data.error || 'request_failed');
+  return data;
 }
 
-function initData(){
-return tg&&tg.initData?tg.initData:'';
-}
-
-async function api(action,extra){
-const body=Object.assign({
-action:action,
-initData:initData()
-},extra||{});
-
-const res=await fetch(API_URL,{
-method:'POST',
-headers:{'Content-Type':'text/plain;charset=utf-8'},
-body:JSON.stringify(body)
-});
-
-const data=await res.json();
-
-if(!data.ok)throw new Error(data.error||'request_failed');
-
-return data;
-}
-
-function money(v){
-return Number(v||0).toFixed(2);
-}
+function money(v){ return Number(v || 0).toFixed(2); }
 
 function esc(v){
-return String(v==null?'':v).replace(/[&<>"']/g,function(c){
-return({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c];
-});
+  return String(v == null ? '' : v).replace(/[&<>"']/g, function(c){
+    return ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' })[c];
+  });
 }
 
 function copyText(id){
-const el=document.getElementById(id);
-if(!el)return;
-
-const value=('value'in el)?el.value:el.textContent;
-
-if(navigator.clipboard){
-navigator.clipboard.writeText(value);
-}else{
-const range=document.createRange();
-range.selectNodeContents(el);
-const sel=window.getSelection();
-sel.removeAllRanges();
-sel.addRange(range);
-document.execCommand('copy');
-}
-
-alert('✅ Copied');
+  const el = document.getElementById(id);
+  if (!el) return;
+  const value = ('value' in el) ? el.value : el.textContent;
+  if (navigator.clipboard) {
+    navigator.clipboard.writeText(value);
+  } else {
+    const range = document.createRange();
+    range.selectNodeContents(el);
+    const sel = window.getSelection();
+    sel.removeAllRanges();
+    sel.addRange(range);
+    document.execCommand('copy');
+  }
+  window.alert('✅ Copied');
 }
 
 function errorText(e){
-const m=String(e&&e.message||e);
-
-const map={
-invalid_init_data:'Telegram session invalid. App-টি Telegram-এর ভিতর থেকে খুলুন।',
-insufficient_balance:'তোমার balance যথেষ্ট নেই।',
-missing_bkash_number:'bKash নাম্বার দাও।',
-invalid_amount:'Amount সঠিক দাও।',
-own_task:'নিজের task নিজে করা যাবে না।',
-task_inactive:'Task এখনো active নয়।',
-task_full:'এই task-এর সব slot পূর্ণ হয়ে গেছে।',
-already_submitted:'এই task-এ তুমি already submit করেছো।',
-already_claimed:'Task already completed.',
-not_joined:'আগে Telegram channel/group-এ join করো।',
-task_not_found:'Task পাওয়া যায়নি।'
-};
-
-return map[m]||('কাজটি করা যায়নি: '+m);
+  const m = String((e && e.message) || e);
+  const map = {
+    invalid_init_data: 'Telegram session invalid — এই app শুধু Telegram এর ভিতর থেকে খোলো।',
+    insufficient_balance: 'তোমার balance যথেষ্ট নেই।',
+    missing_bkash_number: 'bKash নাম্বার দাও।',
+    invalid_amount: 'Amount সঠিক দাও।',
+    own_task: 'নিজের task নিজে করা যাবে না।',
+    task_inactive: 'Task এখনো active নয়।',
+    task_full: 'এই task-এর সব slot পূর্ণ হয়ে গেছে।',
+    already_submitted: 'এই task-এ তুমি already submit করেছো।',
+    already_claimed: 'Task already completed.',
+    not_joined: 'আগে Telegram channel/group-এ join করো।',
+    task_not_found: 'Task পাওয়া যায়নি।',
+    user_not_found: 'User পাওয়া যায়নি — app আবার reload করো।'
+  };
+  return map[m] || ('কাজটি করা যায়নি: ' + m);
 }
 
+/* ============================================================
+   SCREEN NAVIGATION
+   ============================================================ */
 function showScreen(name){
-const screens=[
-'home','tasks','ref','history',
-'posttask','taskdetail','deposit','withdraw'
-];
+  const screens = ['home','tasks','ref','history','posttask','taskdetail','deposit','withdraw'];
+  screens.forEach(function(key){
+    const el = document.getElementById('screen-' + key);
+    if (el) el.classList.toggle('active', key === name);
+  });
+  ['home','tasks','ref'].forEach(function(key){
+    const nav = document.getElementById('nav-' + key);
+    if (nav) nav.classList.toggle('active', key === name);
+  });
 
-screens.forEach(function(key){
-const el=document.getElementById('screen-'+key);
-if(el)el.classList.toggle('active',key===name);
-});
+  const isSubView = ['history','posttask','taskdetail','deposit','withdraw'].indexOf(name) !== -1;
+  const top = document.getElementById('main-topbar');
+  const content = document.getElementById('main-content');
+  const bottom = document.querySelector('.bottomnav');
+  if (top) top.style.display = isSubView ? 'none' : 'flex';
+  if (content) content.style.display = isSubView ? 'none' : 'block';
+  if (bottom) bottom.style.display = isSubView ? 'none' : 'flex';
 
-['home','tasks','ref'].forEach(function(key){
-const nav=document.getElementById('nav-'+key);
-if(nav)nav.classList.toggle('active',key===name);
-});
-
-const sub=[
-'history','posttask','taskdetail',
-'deposit','withdraw'
-].indexOf(name)!==-1;
-
-const top=document.getElementById('main-topbar');
-const content=document.getElementById('main-content');
-const bottom=document.querySelector('.bottomnav');
-
-if(top)top.style.display=sub?'none':'flex';
-if(content)content.style.display=sub?'none':'block';
-if(bottom)bottom.style.display=sub?'none':'flex';
-
-if(name==='tasks'){
-renderPlatformGrid();
+  if (name === 'tasks') { closePlatform(); }
+  if (name === 'ref') { updateReferralUI(); }
+  if (name === 'posttask') { ptSelectedPlatform = null; ptSelectedTypes = []; renderPostTaskPlatformPick(); renderTypeChips(); }
+  if (name === 'history') { loadHistory(); }
+  if (name === 'withdraw') { updateWalletUI(); }
+  if (name === 'deposit') { updateDepositReceiverUI(); updateDepositConvert(); }
 }
 
-if(name==='ref'){
-updateReferralUI();
-}
-
-if(name==='posttask'){
-renderPostTaskPlatformPick();
-renderTypeChips();
-}
-}
-
+/* ============================================================
+   USER DISPLAY
+   ============================================================ */
 function getTelegramUser(){
-return tg&&tg.initDataUnsafe&&tg.initDataUnsafe.user
-?tg.initDataUnsafe.user:{};
+  return (tg && tg.initDataUnsafe && tg.initDataUnsafe.user) ? tg.initDataUnsafe.user : {};
 }
 
 function getDisplayName(){
-const user=state.user||{};
-const tgUser=getTelegramUser();
-
-const tgFullName=[
-tgUser.first_name,
-tgUser.last_name
-].filter(Boolean).join(' ');
-
-const backendName=[
-user.first_name,
-user.last_name
-].filter(Boolean).join(' ');
-
-return user.full_name||
-backendName||
-tgFullName||
-user.username||
-tgUser.username||
-'User';
+  const user = state.user || {};
+  const tgUser = getTelegramUser();
+  const tgFullName = [tgUser.first_name, tgUser.last_name].filter(Boolean).join(' ');
+  const backendName = [user.first_name, user.last_name].filter(Boolean).join(' ');
+  return user.full_name || backendName || tgFullName || user.username || tgUser.username || 'User';
 }
 
+/* ============================================================
+   STATE LOADING
+   ============================================================ */
 function applyState(data){
-state={
-user:data.user||{},
-tasks:Array.isArray(data.tasks)?data.tasks:[],
-honeyPerTaka:Number(data.honeyPerTaka||1),
-referralBonus:
-data.referralBonus==null
-?null
-:Number(data.referralBonus),
-depositBkashNumber:
-String(data.depositBkashNumber||'').trim()
-};
-
-updateWalletUI();
-updateReferralUI();
-updateDepositReceiverUI();
-renderPlatformGrid();
+  state = {
+    user: data.user || {},
+    tasks: Array.isArray(data.tasks) ? data.tasks : [],
+    honeyPerTaka: Number(data.honeyPerTaka || 1),
+    referralBonus: Number(data.referralBonus || 0),
+    depositBkashNumber: String(data.depositBkashNumber || '').trim(),
+    adsLink: String(data.adsLink || '').trim()
+  };
+  updateWalletUI();
+  updateReferralUI();
+  updateDepositReceiverUI();
+  renderPlatformGrid();
 }
 
 function updateWalletUI(){
-const user=state.user||{};
+  const user = state.user || {};
+  const balance = Number(user.balance || 0);
+  const earned = Number(user.total_earned || 0);
+  const refs = Number(user.referral_count || 0);
+  const done = state.tasks.filter(function(t){ return t.completed; }).length;
 
-const balance=Number(user.balance||0);
-const earned=Number(user.total_earned||0);
-const refs=Number(user.referral_count||0);
+  const ids = {
+    'balance-value': balance,
+    'earned-value': earned,
+    'referrals-value': refs,
+    'done-value': done,
+    'available-value': balance,
+    'withdraw-balance': balance
+  };
+  Object.keys(ids).forEach(function(id){
+    const el = document.getElementById(id);
+    if (el) el.textContent = Number(ids[id]).toFixed(1).replace(/\.0$/, '');
+  });
 
-const done=state.tasks.filter(function(t){
-return t.completed;
-}).length;
+  const nameEl = document.getElementById('home-user-name');
+  if (nameEl) nameEl.textContent = getDisplayName();
 
-const ids={
-'balance-value':balance,
-'earned-value':earned,
-'referrals-value':refs,
-'done-value':done,
-'available-value':balance,
-'withdraw-balance':balance
-};
-
-Object.keys(ids).forEach(function(id){
-const el=document.getElementById(id);
-
-if(el){
-el.textContent=
-Number(ids[id])
-.toFixed(1)
-.replace(/\.0$/,'');
-}
-});
-
-const nameEl=document.getElementById('home-user-name');
-
-if(nameEl){
-nameEl.textContent=getDisplayName();
-}
-
-updateDepositConvert();
-updateWithdrawConvert();
+  updateDepositConvert();
+  updateWithdrawConvert();
 }
 
 function updateDepositReceiverUI(){
-const el=document.getElementById('dep-address');
-
-if(!el)return;
-
-el.textContent=
-state.depositBkashNumber||
-'bKash number not configured';
+  const el = document.getElementById('dep-address');
+  if (!el) return;
+  el.textContent = state.depositBkashNumber || 'bKash number not configured';
 }
 
 function updateDepositConvert(){
-const input=document.getElementById('dep-amount');
-const el=document.getElementById('dep-convert');
-
-if(!input||!el)return;
-
-const taka=Number(input.value)||0;
-
-if(taka<=0){
-el.textContent='= — honey';
-return;
-}
-
-const rate=Number(state.honeyPerTaka||1);
-
-el.textContent=
-'= '+(taka*rate).toFixed(1)+' honey';
+  const input = document.getElementById('dep-amount');
+  const el = document.getElementById('dep-convert');
+  if (!input || !el) return;
+  const taka = Number(input.value) || 0;
+  if (taka <= 0) { el.textContent = '= — honey'; return; }
+  el.textContent = '= ' + (taka * Number(state.honeyPerTaka || 1)).toFixed(1) + ' honey';
 }
 
 function updateWithdrawConvert(){
-const input=document.getElementById('wd-amount');
-const el=document.getElementById('wd-convert');
-
-if(!input||!el)return;
-
-const honey=Number(input.value)||0;
-
-if(honey<=0){
-el.textContent='= — ৳';
-return;
-}
-
-const rate=Number(state.honeyPerTaka||1);
-
-el.textContent=
-'= ৳ '+(honey/rate).toFixed(2);
+  const input = document.getElementById('wd-amount');
+  const el = document.getElementById('wd-convert');
+  if (!input || !el) return;
+  const honey = Number(input.value) || 0;
+  if (honey <= 0) { el.textContent = '= — ৳'; return; }
+  el.textContent = '= ৳ ' + (honey / Number(state.honeyPerTaka || 1)).toFixed(2);
 }
 
 async function refreshState(){
-try{
-
-let startParam=
-tg&&tg.initDataUnsafe
-?(
-tg.initDataUnsafe.start_param||''
-)
-:'';
-
-if(!startParam){
-
-const qs=
-new URLSearchParams(
-window.location.search
-);
-
-startParam=
-qs.get('startapp')||
-qs.get('start')||
-'';
-}
-
-const data=
-await api(
-'get_state',
-{referredBy:startParam}
-);
-
-applyState(data);
-
-}catch(e){
-
-console.error(e);
-
-const msg=errorText(e);
-
-if(
-String(e.message)==='invalid_init_data'||
-!initData()
-){
-alert(msg);
-}
-
-}
+  try {
+    let startParam = (tg && tg.initDataUnsafe) ? (tg.initDataUnsafe.start_param || '') : '';
+    if (!startParam) {
+      const qs = new URLSearchParams(window.location.search);
+      startParam = qs.get('startapp') || qs.get('start') || '';
+    }
+    const data = await api('get_state', { referredBy: startParam });
+    applyState(data);
+  } catch (e) {
+    console.error(e);
+    window.alert(errorText(e));
+  }
 }
 
 function updateReferralUI(){
-const bonus=Number(state.referralBonus);
-const count=
-Number(state.user.referral_count||0);
+  const bonus = Number(state.referralBonus || 0);
+  const count = Number(state.user.referral_count || 0);
 
-const bonusText=
-document.getElementById('ref-bonus-text');
+  const bonusText = document.getElementById('ref-bonus-text');
+  const countEl = document.getElementById('ref-count-value');
+  const earnedEl = document.getElementById('ref-earned-value');
+  const linkEl = document.getElementById('referral-link');
 
-const countEl=
-document.getElementById('ref-count-value');
+  if (bonusText) bonusText.textContent = '+' + money(bonus).replace(/\.00$/, '') + ' honey';
+  if (countEl) countEl.textContent = String(count);
+  if (earnedEl) earnedEl.textContent = money(count * bonus);
 
-const earnedEl=
-document.getElementById('ref-earned-value');
-
-const linkEl=
-document.getElementById('referral-link');
-
-if(bonusText){
-
-bonusText.textContent=
-Number.isFinite(bonus)&&bonus>=0
-?('+'+
-money(bonus)
-.replace(/\.00$/,'')+
-' honey')
-:'Not configured';
-
+  const tgUser = getTelegramUser();
+  const referralUserId = state.user.user_id || tgUser.id || '';
+  if (linkEl && referralUserId) {
+    linkEl.value = 'https://t.me/' + BOT_USERNAME + '?startapp=' + encodeURIComponent(referralUserId);
+  }
 }
 
-if(countEl){
-countEl.textContent=String(count);
+/* ============================================================
+   PLATFORM GRID  (Ads-first lock system — 100% client-side,
+   no backend/Sheet dependency at all)
+   ============================================================ */
+function platformMeta(key){
+  const k = String(key || 'other').toLowerCase();
+  return PLATFORM_META[k] || { name: key || 'Other', mono: String(key || '?').substring(0,2).toUpperCase() };
 }
 
-if(earnedEl){
-earnedEl.textContent=
-Number.isFinite(bonus)
-?money(count*bonus)
-:'—';
+const ADS_STORAGE_KEY = 'bee_ads_progress_v1';
+const ADS_COOLDOWN_MS = 24 * 60 * 60 * 1000;
+
+function loadAdsProgress(){
+  try {
+    const raw = localStorage.getItem(ADS_STORAGE_KEY);
+    if (!raw) return { watched: 0, completedAt: null };
+    const p = JSON.parse(raw);
+    return { watched: Number(p.watched) || 0, completedAt: p.completedAt || null };
+  } catch (e) {
+    return { watched: 0, completedAt: null };
+  }
 }
 
-const histRef=
-document.getElementById(
-'history-ref-bonus'
-);
-
-if(histRef){
-histRef.textContent=
-Number.isFinite(bonus)
-?('+'+money(bonus))
-:'—';
+function saveAdsProgress(p){
+  try { localStorage.setItem(ADS_STORAGE_KEY, JSON.stringify(p)); } catch (e) {}
 }
 
-const tgUser=getTelegramUser();
-
-const referralUserId=
-state.user.user_id||
-tgUser.id||
-'';
-
-if(linkEl&&referralUserId){
-
-linkEl.value=
-'https://t.me/'+
-BOT_USERNAME+
-'?startapp='+
-encodeURIComponent(
-referralUserId
-);
-
+/* Returns the current progress, auto-resetting once 24h have passed
+   since the last time all 3 were watched. */
+function getAdsState(){
+  const p = loadAdsProgress();
+  if (p.completedAt && (Date.now() - p.completedAt) >= ADS_COOLDOWN_MS) {
+    const reset = { watched: 0, completedAt: null };
+    saveAdsProgress(reset);
+    return reset;
+  }
+  return p;
 }
-}
-function renderPlatformGrid(){
-const grid=document.getElementById('platform-grid');
-if(!grid)return;
 
-const platforms=[
-'Facebook',
-'Instagram',
-'YouTube',
-'TikTok',
-'Telegram',
-'X',
-'Discord',
-'Reddit',
-'Website',
-'App',
-'Other'
+function getAdsTasksLocal(){
+  const p = getAdsState();
+  return [1, 2, 3].map(function(n){
+    return {
+      task_id: 'ads_' + n,
+      title: 'Ad ভিডিও দেখো ' + n,
+      points: 0,
+      type: 'ads',
+      target: state.adsLink || '',
+      platform: 'ads',
+      completed: n <= p.watched
+    };
+  });
+}
+
+function adsFullyDone(){
+  return getAdsState().watched >= 3;
+}
+
+function watchAdLocal(taskId){
+  const p = getAdsState();
+  const slotNum = Number(String(taskId).replace('ads_', '')) || 0;
+  if (slotNum <= p.watched) return; // already watched this slot
+  p.watched = Math.min(3, p.watched + 1);
+  if (p.watched >= 3) p.completedAt = Date.now();
+  saveAdsProgress(p);
+}
+
+/* Fixed display order — ads first, then everything else in this list.
+   Every one of these always shows in the grid, even with 0 tasks. */
+const FIXED_PLATFORM_ORDER = [
+  'ads', 'telegram', 'facebook', 'instagram', 'tiktok', 'gmail',
+  'youtube', 'whatsapp', 'x', 'discord', 'linkedin', 'snapchat'
 ];
 
-grid.innerHTML=platforms.map(function(p){
-const count=state.tasks.filter(function(t){
-return String(t.platform||'').toLowerCase()===p.toLowerCase()
-&& !t.completed;
-}).length;
+function groupTasksByPlatform(){
+  const groups = {};
+  FIXED_PLATFORM_ORDER.forEach(function(key){ groups[key] = []; });
 
-return `
-<div class="platform-card" onclick="openPlatform('${esc(p)}')">
-<div class="p-hex">${esc(p.substring(0,2).toUpperCase())}</div>
-<div class="p-name">${esc(p)}</div>
-<div class="p-count">${count} task</div>
-</div>`;
-}).join('');
+  // Ads are always local/client-side — never taken from the backend.
+  groups.ads = getAdsTasksLocal();
+
+  state.tasks.forEach(function(t){
+    const key = String(t.platform || 'other').toLowerCase();
+    if (key === 'ads') return; // ignore any backend-provided ads tasks entirely
+    if (!groups[key]) groups[key] = []; // any extra platform from the sheet not in the fixed list still shows
+    groups[key].push(t);
+  });
+
+  const keys = Object.keys(groups).sort(function(a, b){
+    const ia = FIXED_PLATFORM_ORDER.indexOf(a);
+    const ib = FIXED_PLATFORM_ORDER.indexOf(b);
+    if (ia === -1 && ib === -1) return a.localeCompare(b);
+    if (ia === -1) return 1;
+    if (ib === -1) return -1;
+    return ia - ib;
+  });
+
+  return keys.map(function(k){ return { key: k, tasks: groups[k] }; });
 }
 
-function openPlatform(platform){
-currentPlatform=platform;
+function renderPlatformGrid(){
+  const grid = document.getElementById('platform-grid');
+  if (!grid) return;
 
-document.getElementById('platform-grid-view').style.display='none';
-document.getElementById('platform-detail-view').style.display='block';
+  const groups = groupTasksByPlatform();
+  const unlocked = adsFullyDone();
 
-document.getElementById('platform-detail-title').textContent=platform;
+  const countLabel = document.getElementById('platform-count-label');
+  if (countLabel) countLabel.textContent = groups.length + ' platform';
 
-renderPlatformTasks(platform);
+  grid.innerHTML = groups.map(function(g){
+    const meta = platformMeta(g.key);
+    const isAds = g.key === 'ads';
+    const locked = !isAds && !unlocked;
+    const doneCount = g.tasks.filter(function(t){ return t.completed; }).length;
+    const countText = g.tasks.length === 0 ? '0 task' : (doneCount + '/' + g.tasks.length);
+
+    return '<div class="platform-card' + (locked ? ' locked' : '') + '" onclick="' +
+      (locked ? "alert('🔒 আগে Ads এর task গুলো সম্পন্ন করো')" : "openPlatform('" + g.key + "')") + '">' +
+      '<div class="p-hex">' + (locked ? '🔒' : esc(meta.mono)) + '</div>' +
+      '<div class="p-name">' + esc(meta.name) + '</div>' +
+      '<div class="p-count">' + (locked ? 'Locked' : countText) + '</div>' +
+      '</div>';
+  }).join('');
+
+  const banner = document.getElementById('lock-banner');
+  if (banner) {
+    banner.style.display = 'block';
+    banner.textContent = unlocked
+      ? '✅ Ads সম্পন্ন — বাকি সব platform unlock আছে।'
+      : '🔒 আগে Ads platform এর সব task সম্পন্ন করো — তারপর বাকি সব unlock হবে।';
+  }
+}
+
+function openPlatform(key){
+  currentPlatform = key;
+  document.getElementById('platform-grid-view').style.display = 'none';
+  document.getElementById('platform-detail-view').style.display = 'block';
+  document.getElementById('platform-detail-title').textContent = platformMeta(key).name;
+  renderPlatformTasks(key);
 }
 
 function closePlatform(){
-currentPlatform=null;
-
-document.getElementById('platform-grid-view').style.display='block';
-document.getElementById('platform-detail-view').style.display='none';
-
-renderPlatformGrid();
+  currentPlatform = null;
+  const gridView = document.getElementById('platform-grid-view');
+  const detailView = document.getElementById('platform-detail-view');
+  if (gridView) gridView.style.display = 'block';
+  if (detailView) detailView.style.display = 'none';
+  renderPlatformGrid();
 }
 
-function renderPlatformTasks(platform){
-const list=document.getElementById('platform-task-list');
+function renderPlatformTasks(key){
+  const list = document.getElementById('platform-task-list');
+  const tasks = (String(key).toLowerCase() === 'ads')
+    ? getAdsTasksLocal()
+    : state.tasks.filter(function(t){ return String(t.platform).toLowerCase() === String(key).toLowerCase(); });
 
-const tasks=state.tasks.filter(function(t){
-return String(t.platform||'').toLowerCase()===
-String(platform||'').toLowerCase()
-&& !t.completed;
-});
+  if (!tasks.length) {
+    list.innerHTML = '<div style="text-align:center;color:var(--text-muted);padding:35px 10px;font-size:12px;">এই platform-এ এখন কোনো task নেই।</div>';
+    return;
+  }
 
-if(!tasks.length){
-list.innerHTML=`
-<div style="text-align:center;color:var(--text-muted);padding:35px 10px;font-size:12px;">
-এই platform-এ এখন কোনো task নেই।
-</div>`;
-return;
-}
+  list.innerHTML = tasks.map(function(t){
+    const meta = platformMeta(t.platform);
+    const id = t.task_id;
+    let actionBtn;
 
-list.innerHTML=tasks.map(function(task){
-const id=task.id||task.task_id||'';
+    if (t.completed) {
+      actionBtn = '<button class="claim-btn disabled">Done</button>';
+    } else if (t.userPosted && t.pending) {
+      actionBtn = '<button class="claim-btn disabled" style="color:var(--honey);border-color:var(--honey);">Pending</button>';
+    } else if (String(t.platform).toLowerCase() === 'ads') {
+      actionBtn = '<button class="claim-btn" onclick="watchAd(\'' + esc(id) + '\')">Watch</button>';
+    } else if (String(t.type).toLowerCase() === 'join_channel') {
+      actionBtn = '<button class="claim-btn" onclick="verifyJoinTask(\'' + esc(id) + '\')">Verify</button>';
+    } else if (t.userPosted) {
+      actionBtn = '<button class="claim-btn" onclick="openTaskDetail(\'' + esc(id) + '\')">Details</button>';
+    } else {
+      actionBtn = '<button class="claim-btn" onclick="claimSimpleTask(\'' + esc(id) + '\')">Claim</button>';
+    }
 
-return `
-<div class="task-card">
-<div class="task-hex">
-${esc((task.platform||'').substring(0,2).toUpperCase())}
-</div>
+    const rewardLine = (String(t.platform).toLowerCase() === 'ads')
+      ? '<div class="pts" style="color:var(--text-muted);">👁️ শুধু view গণনা হবে — honey নেই</div>'
+      : '<div class="pts">+' + Number(t.points || 0) + ' honey</div>';
 
-<div class="task-body">
-<div class="title">${esc(task.title||'Untitled Task')}</div>
-<div class="desc">${esc(task.description||task.desc||'')}</div>
-<div class="pts">+${esc(task.reward||0)} honey</div>
-</div>
-
-<button class="claim-btn"
-onclick="openTaskDetail('${esc(id)}')">
-Do
-</button>
-</div>`;
-}).join('');
+    return '<div class="task-card">' +
+      '<div class="task-hex' + (t.completed ? ' done' : '') + '">' + (t.completed ? '✓' : esc(meta.mono)) + '</div>' +
+      '<div class="task-body">' +
+        '<div class="title">' + esc(t.title || 'Untitled Task') + '</div>' +
+        '<div class="desc">' + esc(t.description || '') + '</div>' +
+        rewardLine +
+      '</div>' +
+      actionBtn +
+      '</div>';
+  }).join('');
 }
 
 function findTask(id){
-return state.tasks.find(function(t){
-return String(t.id||t.task_id)===String(id);
-});
+  if (String(id).indexOf('ads_') === 0) {
+    return getAdsTasksLocal().find(function(t){ return t.task_id === id; });
+  }
+  return state.tasks.find(function(t){ return String(t.task_id) === String(id); });
 }
 
+/* ---- Ads: shown in an in-app modal for a required 30s minimum —
+   leaving/cancelling before the timer finishes does NOT count.
+   Still fully client-side (localStorage), no backend call, no honey. ---- */
+const AD_VIEW_SECONDS = 30;
+let adView = null; // { taskId, remaining, intervalId }
+
+function openAdView(taskId){
+  const task = findTask(taskId);
+  if (!task) { window.alert('Task পাওয়া যায়নি।'); return; }
+
+  if (!state.adsLink) {
+    window.alert('⚠️ Ad link এখনো Config sheet-এ সেট করা হয়নি (key: ads_link)।');
+    return;
+  }
+
+  adView = { taskId: taskId, remaining: AD_VIEW_SECONDS };
+
+  const iframe = document.getElementById('ad-modal-iframe');
+  if (iframe) iframe.src = state.adsLink;
+
+  const claimBtn = document.getElementById('ad-modal-claim-btn');
+  if (claimBtn) { claimBtn.disabled = true; claimBtn.textContent = 'অপেক্ষা করো...'; }
+
+  updateAdModalTimerLabel();
+
+  const overlay = document.getElementById('ad-modal-overlay');
+  if (overlay) overlay.classList.add('active');
+
+  adView.intervalId = setInterval(tickAdView, 1000);
+}
+
+function tickAdView(){
+  if (!adView) return;
+  adView.remaining -= 1;
+  updateAdModalTimerLabel();
+  if (adView.remaining <= 0) {
+    clearInterval(adView.intervalId);
+    const claimBtn = document.getElementById('ad-modal-claim-btn');
+    if (claimBtn) { claimBtn.disabled = false; claimBtn.textContent = '✅ সম্পন্ন — Claim করো'; }
+  }
+}
+
+function updateAdModalTimerLabel(){
+  const el = document.getElementById('ad-modal-timer');
+  if (!el || !adView) return;
+  const s = Math.max(0, adView.remaining);
+  const mm = String(Math.floor(s / 60)).padStart(2, '0');
+  const ss = String(s % 60).padStart(2, '0');
+  el.textContent = mm + ':' + ss;
+}
+
+function openAdExternally(){
+  if (state.adsLink) window.open(state.adsLink, '_blank');
+}
+
+function closeAdModal(){
+  if (adView && adView.intervalId) clearInterval(adView.intervalId);
+  adView = null;
+  const overlay = document.getElementById('ad-modal-overlay');
+  if (overlay) overlay.classList.remove('active');
+  const iframe = document.getElementById('ad-modal-iframe');
+  if (iframe) iframe.src = 'about:blank';
+}
+
+/* Closing/cancelling before the timer hits 0 = does not count. */
+function cancelAdView(){
+  const early = adView && adView.remaining > 0;
+  closeAdModal();
+  if (early) window.alert('❌ ৩০ সেকেন্ড শেষ হওয়ার আগে বন্ধ করেছো — এই view count হয়নি।');
+}
+
+/* Only reachable once the 30s timer has finished (button stays disabled until then). */
+function claimAdView(){
+  if (!adView || adView.remaining > 0) return;
+  const taskId = adView.taskId;
+  closeAdModal();
+  watchAdLocal(taskId);
+  renderPlatformTasks('ads');
+  updateWalletUI();
+}
+
+function watchAd(taskId){
+  const task = findTask(taskId);
+  if (!task) { window.alert('Task পাওয়া যায়নি।'); return; }
+
+  if (typeof show_11552484 !== 'function') {
+    window.alert('⚠️ Ad লোড হয়নি — ইন্টারনেট চেক করে আবার চেষ্টা করো।');
+    return;
+  }
+
+  const btn = document.querySelector('.task-card .claim-btn:not(.disabled)');
+  if (btn) { btn.disabled = true; btn.textContent = 'লোড হচ্ছে...'; }
+
+  show_11552484().then(function(){
+    // User watched the ad fully — reward the progress.
+    watchAdLocal(taskId);
+    renderPlatformTasks('ads');
+    updateWalletUI();
+  }).catch(function(e){
+    console.error(e);
+    window.alert('❌ Ad দেখানো যায়নি, একটু পরে আবার চেষ্টা করো।');
+  }).finally(function(){
+    renderPlatformTasks('ads');
+  });
+}
+
+/* ---- Telegram join/group tasks: bot auto-verifies membership ---- */
+async function verifyJoinTask(taskId){
+  await claimSimpleTask(taskId);
+}
+
+/* ---- Admin fixed tasks (join_channel / ads / other): instant claim, backend-verified ---- */
+async function claimSimpleTask(taskId){
+  try {
+    await api('claim_task', { taskId: taskId });
+    await refreshState();
+    if (currentPlatform) { renderPlatformTasks(currentPlatform); }
+    window.alert('✅ Task সম্পন্ন! Honey যোগ হয়েছে।');
+  } catch (e) {
+    window.alert(errorText(e));
+  }
+}
+
+/* ============================================================
+   TASK DETAIL  (community / user-posted tasks — needs proof + poster review)
+   ============================================================ */
 function openTaskDetail(id){
-const task=findTask(id);
+  const task = findTask(id);
+  if (!task) { window.alert('Task পাওয়া যায়নি।'); return; }
+  currentTask = task;
 
-if(!task){
-alert('Task পাওয়া যায়নি।');
-return;
-}
+  const meta = platformMeta(task.platform);
+  document.getElementById('td-title').textContent = task.title || 'Untitled Task';
+  document.getElementById('td-sub').textContent = meta.name + (task.userPosted ? ' • Community Task' : '');
+  document.getElementById('td-reward').textContent = '+' + Number(task.points || 0) + ' honey';
+  document.getElementById('td-hex').textContent = meta.mono;
+  document.getElementById('td-desc').value = '';
 
-currentTask=task;
+  const steps = document.getElementById('td-steps');
+  const instruction = task.description || 'Task টি সম্পন্ন করো, তারপর নিচে বর্ণনা লিখে জমা দাও।';
+  steps.innerHTML = '<div class="step-item"><div class="step-num">1</div><div>' + esc(instruction) + '</div></div>' +
+    '<div class="step-item"><div class="step-num">2</div><div>নিচে description লিখে Submit করো — যে এই task পোস্ট করেছে সে review করে honey দিবে।</div></div>';
 
-document.getElementById('td-title').textContent=
-task.title||'Untitled Task';
+  const linkBtn = document.getElementById('td-open-link');
+  linkBtn.onclick = function(){
+    const url = task.target || task.link || '';
+    if (!url) { window.alert('এই task-এর কোনো link নেই।'); return; }
+    window.open(url, '_blank');
+  };
 
-document.getElementById('td-sub').textContent=
-(task.platform||'')+
-' • '+
-(task.type||'Task');
-
-document.getElementById('td-reward').textContent=
-'+'+Number(task.reward||0)+' honey';
-
-document.getElementById('td-hex').textContent=
-String(task.platform||'Task')
-.substring(0,2)
-.toUpperCase();
-
-document.getElementById('td-desc').value='';
-
-const steps=document.getElementById('td-steps');
-
-const instruction=
-task.instruction||
-task.description||
-task.desc||
-'Task টি সম্পন্ন করো।';
-
-steps.innerHTML=`
-<div class="step-item">
-<div class="step-num">1</div>
-<div>${esc(instruction)}</div>
-</div>`;
-
-const linkBtn=document.getElementById('td-open-link');
-
-linkBtn.onclick=function(){
-const url=task.link||task.url||'';
-
-if(!url){
-alert('এই task-এর কোনো link নেই।');
-return;
-}
-
-window.open(url,'_blank');
-};
-
-showScreen('taskdetail');
+  showScreen('taskdetail');
 }
 
 function closeTaskDetail(){
-currentTask=null;
-
-if(currentPlatform){
-showScreen('tasks');
-openPlatform(currentPlatform);
-}else{
-showScreen('tasks');
-}
+  currentTask = null;
+  if (currentPlatform) { showScreen('tasks'); openPlatform(currentPlatform); }
+  else { showScreen('tasks'); }
 }
 
 async function submitTaskProof(){
-if(!currentTask){
-alert('Task select করা হয়নি।');
-return;
+  if (!currentTask) { window.alert('Task select করা হয়নি।'); return; }
+  const desc = document.getElementById('td-desc').value.trim();
+  if (!desc) { window.alert('তুমি কীভাবে task করেছো লিখো।'); return; }
+
+  const btn = document.getElementById('td-submit-btn');
+  if (btn) { btn.disabled = true; btn.textContent = 'Submitting...'; }
+
+  try {
+    await api('submit_task_proof', { taskId: currentTask.task_id, description: desc });
+    window.alert('✅ Submit হয়েছে। যে এই task পোস্ট করেছে তার কাছে review-এর জন্য পাঠানো হলো।');
+    await refreshState();
+    closeTaskDetail();
+  } catch (e) {
+    window.alert(errorText(e));
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = 'Submit for Review'; }
+  }
 }
 
-const desc=
-document.getElementById('td-desc').value.trim();
-
-if(!desc){
-alert('Task কীভাবে করেছো সেটা লিখো।');
-return;
-}
-
-const btn=
-document.querySelector('#screen-taskdetail .submit-post-btn');
-
-if(btn){
-btn.disabled=true;
-btn.textContent='Submitting...';
-}
-
-try{
-
-const data=await api('submit_task',{
-taskId:currentTask.id||currentTask.task_id,
-description:desc
-});
-
-alert(
-data.message||
-'✅ Task submission পাঠানো হয়েছে। Review-এর জন্য অপেক্ষা করো।'
-);
-
-await refreshState();
-
-closeTaskDetail();
-
-}catch(e){
-
-alert(errorText(e));
-
-}finally{
-
-if(btn){
-btn.disabled=false;
-btn.textContent='Submit for Review';
-}
-
-}
-}
-
+/* ============================================================
+   POST TASK
+   ============================================================ */
 function renderPostTaskPlatformPick(){
-const box=document.getElementById('pt-platform-pick');
-
-if(!box)return;
-
-const platforms=[
-'Facebook',
-'Instagram',
-'YouTube',
-'TikTok',
-'Telegram',
-'X',
-'Discord',
-'Reddit',
-'Website',
-'App',
-'Other'
-];
-
-box.innerHTML=platforms.map(function(p){
-const selected=
-ptSelectedPlatform===p?'selected':'';
-
-return `
-<div class="pp-item ${selected}"
-onclick="selectPostPlatform('${esc(p)}')">
-${esc(p)}
-</div>`;
-}).join('');
+  const box = document.getElementById('pt-platform-pick');
+  if (!box) return;
+  const keys = Object.keys(PLATFORM_META).filter(function(k){ return k !== 'ads' && k !== 'other'; });
+  box.innerHTML = keys.map(function(key){
+    const meta = PLATFORM_META[key];
+    const selected = ptSelectedPlatform === key ? ' selected' : '';
+    return '<div class="pp-item' + selected + '" onclick="selectPostPlatform(\'' + key + '\')">' + esc(meta.name) + '</div>';
+  }).join('');
 }
 
 function selectPostPlatform(platform){
-ptSelectedPlatform=platform;
-ptSelectedTypes=[];
-
-renderPostTaskPlatformPick();
-renderTypeChips();
+  ptSelectedPlatform = platform;
+  ptSelectedTypes = [];
+  renderPostTaskPlatformPick();
+  renderTypeChips();
 }
 
-function renderTypeChips(){
-const box=document.getElementById('pt-type-chips');
-
-if(!box)return;
-
-if(!ptSelectedPlatform){
-box.innerHTML=
-'<div style="color:var(--text-muted);font-size:12px;">আগে Platform বেছে নাও</div>';
-return;
-}
-
-const typeMap={
-Facebook:[
-'Like',
-'Follow',
-'Comment',
-'Share',
-'Join Group'
-],
-Instagram:[
-'Follow',
-'Like',
-'Comment',
-'Save'
-],
-YouTube:[
-'Subscribe',
-'Like',
-'Comment',
-'View'
-],
-TikTok:[
-'Follow',
-'Like',
-'Comment',
-'View'
-],
-Telegram:[
-'Join Channel',
-'Join Group',
-'Start Bot'
-],
-X:[
-'Follow',
-'Like',
-'Repost',
-'Reply'
-],
-Discord:[
-'Join Server',
-'React',
-'Verify'
-],
-Reddit:[
-'Join',
-'Upvote',
-'Comment'
-],
-Website:[
-'Visit',
-'Register',
-'Click'
-],
-App:[
-'Install',
-'Register',
-'Review'
-],
-Other:[
-'Custom'
-]
+const TASK_TYPE_OPTIONS = {
+  facebook: ['Like', 'Follow', 'Comment', 'Share', 'Join Group'],
+  instagram: ['Follow', 'Like', 'Comment', 'Save'],
+  youtube: ['Subscribe', 'Like', 'Comment', 'View'],
+  tiktok: ['Follow', 'Like', 'Comment', 'View'],
+  telegram: ['Join Channel', 'Join Group'],
+  x: ['Follow', 'Like', 'Repost', 'Reply'],
+  discord: ['Join Server', 'React'],
+  gmail: ['Verify Email'],
+  whatsapp: ['Join Channel'],
+  linkedin: ['Follow', 'Like'],
+  snapchat: ['Add Friend']
 };
 
-const types=typeMap[ptSelectedPlatform]||['Custom'];
-
-box.innerHTML=types.map(function(type){
-const selected=
-ptSelectedTypes.indexOf(type)!==-1
-?'selected':'';
-
-return `
-<div class="type-chip ${selected}"
-onclick="togglePostType('${esc(type)}')">
-${esc(type)}
-</div>`;
-}).join('');
+function renderTypeChips(){
+  const box = document.getElementById('pt-type-chips');
+  if (!box) return;
+  if (!ptSelectedPlatform) {
+    box.innerHTML = '<div style="color:var(--text-muted);font-size:12px;">আগে Platform বেছে নাও</div>';
+    return;
+  }
+  const types = TASK_TYPE_OPTIONS[ptSelectedPlatform] || ['Custom'];
+  box.innerHTML = types.map(function(type){
+    const selected = ptSelectedTypes.indexOf(type) !== -1 ? ' selected' : '';
+    return '<div class="type-chip' + selected + '" onclick="togglePostType(\'' + esc(type) + '\')">' + esc(type) + '</div>';
+  }).join('');
 }
 
 function togglePostType(type){
-const index=ptSelectedTypes.indexOf(type);
-
-if(index===-1){
-ptSelectedTypes.push(type);
-}else{
-ptSelectedTypes.splice(index,1);
-}
-
-renderTypeChips();
+  const idx = ptSelectedTypes.indexOf(type);
+  if (idx === -1) ptSelectedTypes.push(type); else ptSelectedTypes.splice(idx, 1);
+  renderTypeChips();
 }
 
 function updatePostCost(){
-const qty=
-Number(document.getElementById('pt-qty').value)||0;
-
-const reward=
-Number(document.getElementById('pt-reward').value)||0;
-
-const total=qty*reward;
-
-const el=document.getElementById('pt-total');
-
-if(el){
-el.textContent=
-total>0?total.toFixed(1):'—';
-}
+  const qty = Number(document.getElementById('pt-qty').value) || 0;
+  const reward = Number(document.getElementById('pt-reward').value) || 0;
+  const total = qty * reward;
+  const el = document.getElementById('pt-total');
+  if (el) el.textContent = total > 0 ? total.toFixed(1) : '—';
 }
 
 async function submitPostTask(){
+  if (!ptSelectedPlatform) { window.alert('আগে একটা Platform বেছে নাও।'); return; }
+  if (!ptSelectedTypes.length) { window.alert('আগে অন্তত একটা Task Type বেছে নাও।'); return; }
 
-if(!ptSelectedPlatform){
-alert('Platform select করো।');
-return;
+  const title = document.getElementById('pt-title').value.trim();
+  const link = document.getElementById('pt-link').value.trim();
+  const desc = document.getElementById('pt-desc').value.trim();
+  const qty = Number(document.getElementById('pt-qty').value);
+  const reward = Number(document.getElementById('pt-reward').value);
+
+  if (!title) { window.alert('Task Title দাও।'); return; }
+  if (!link) { window.alert('Link দাও।'); return; }
+  if (!qty || qty < 1) { window.alert('কতজন করবে সেটা দাও।'); return; }
+  if (!reward || reward <= 0) { window.alert('প্রতি জনের reward দাও।'); return; }
+
+  const total = qty * reward;
+  if (Number(state.user.balance || 0) < total) { window.alert('এই task post করার জন্য তোমার balance যথেষ্ট নেই।'); return; }
+
+  const btn = document.querySelector('#screen-posttask .submit-post-btn');
+  if (btn) { btn.disabled = true; btn.textContent = 'Posting...'; }
+
+  try {
+    await api('post_user_task', {
+      platform: ptSelectedPlatform,
+      types: ptSelectedTypes,
+      title: title,
+      link: link,
+      description: desc,
+      quantity: qty,
+      rewardHoney: reward
+    });
+    window.alert('✅ Task পোস্ট হয়েছে — Admin approve করার পর সবাই দেখতে পাবে।');
+
+    document.getElementById('pt-title').value = '';
+    document.getElementById('pt-link').value = '';
+    document.getElementById('pt-desc').value = '';
+    document.getElementById('pt-qty').value = '';
+    document.getElementById('pt-reward').value = '';
+    ptSelectedPlatform = null; ptSelectedTypes = [];
+
+    await refreshState();
+    showScreen('tasks');
+  } catch (e) {
+    window.alert(errorText(e));
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = 'Post Task'; }
+  }
 }
 
-if(!ptSelectedTypes.length){
-alert('Task type select করো।');
-return;
-}
-
-const title=
-document.getElementById('pt-title').value.trim();
-
-const link=
-document.getElementById('pt-link').value.trim();
-
-const desc=
-document.getElementById('pt-desc').value.trim();
-
-const qty=
-Number(document.getElementById('pt-qty').value);
-
-const reward=
-Number(document.getElementById('pt-reward').value);
-
-if(!title){
-alert('Task title দাও।');
-return;
-}
-
-if(!link){
-alert('Task link দাও।');
-return;
-}
-
-if(!qty||qty<1){
-alert('কতজন করবে সেটা দাও।');
-return;
-}
-
-if(!reward||reward<=0){
-alert('প্রতি জনের reward দাও।');
-return;
-}
-
-const total=qty*reward;
-
-if(Number(state.user.balance||0)<total){
-alert('এই task post করার জন্য তোমার balance যথেষ্ট নেই।');
-return;
-}
-
-const btn=document.querySelector('#screen-posttask .submit-post-btn');
-
-if(btn){
-btn.disabled=true;
-btn.textContent='Posting...';
-}
-
-try{
-
-const data=await api('create_task',{
-platform:ptSelectedPlatform,
-type:ptSelectedTypes.join(', '),
-title:title,
-link:link,
-description:desc,
-quantity:qty,
-reward:reward
-});
-
-alert(
-data.message||
-'✅ Task successfully posted।'
-);
-
-document.getElementById('pt-title').value='';
-document.getElementById('pt-link').value='';
-document.getElementById('pt-desc').value='';
-document.getElementById('pt-qty').value='';
-document.getElementById('pt-reward').value='';
-
-ptSelectedPlatform=null;
-ptSelectedTypes=[];
-
-await refreshState();
-
-showScreen('tasks');
-
-}catch(e){
-
-alert(errorText(e));
-
-}finally{
-
-if(btn){
-btn.disabled=false;
-btn.textContent='Post Task';
-}
-
-}
-}
-
+/* ============================================================
+   DEPOSIT / WITHDRAW
+   ============================================================ */
 async function submitDeposit(){
+  const amount = Number(document.getElementById('dep-amount').value) || 0;
+  const txid = document.getElementById('dep-txid').value.trim();
+  const sender = document.getElementById('dep-sender').value.trim();
 
-const amount=
-Number(document.getElementById('dep-amount').value);
+  if (amount <= 0) { window.alert('Deposit amount দাও।'); return; }
+  if (!sender) { window.alert('যে bKash number থেকে টাকা পাঠিয়েছো সেটা দাও।'); return; }
 
-const txid=
-document.getElementById('dep-txid').value.trim();
+  const btn = document.querySelector('#screen-deposit .submit-post-btn');
+  if (btn) { btn.disabled = true; btn.textContent = 'Submitting...'; }
 
-const sender=
-document.getElementById('dep-sender').value.trim();
-
-if(!amount||amount<=0){
-alert('Deposit amount দাও।');
-return;
-}
-
-if(!sender){
-alert('যে bKash number থেকে টাকা পাঠিয়েছো সেটা দাও।');
-return;
-}
-
-const btn=
-document.querySelector('#screen-deposit .submit-post-btn');
-
-if(btn){
-btn.disabled=true;
-btn.textContent='Submitting...';
-}
-
-try{
-
-const data=await api('deposit_request',{
-amount:amount,
-txid:txid,
-sender:sender
-});
-
-alert(
-data.message||
-'✅ Deposit request পাঠানো হয়েছে।'
-);
-
-document.getElementById('dep-amount').value='';
-document.getElementById('dep-txid').value='';
-document.getElementById('dep-sender').value='';
-
-updateDepositConvert();
-
-await refreshState();
-
-showScreen('home');
-
-}catch(e){
-
-alert(errorText(e));
-
-}finally{
-
-if(btn){
-btn.disabled=false;
-btn.textContent='Submit Deposit';
-}
-
-}
+  try {
+    await api('submit_deposit', { amountTaka: amount, trxid: txid, senderNumber: sender });
+    window.alert('✅ Deposit request জমা হয়েছে — যাচাই করার পর honey যোগ হবে।');
+    document.getElementById('dep-amount').value = '';
+    document.getElementById('dep-txid').value = '';
+    document.getElementById('dep-sender').value = '';
+    updateDepositConvert();
+    showScreen('home');
+  } catch (e) {
+    window.alert(errorText(e));
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = 'Submit Deposit'; }
+  }
 }
 
 async function submitWithdraw(){
+  const amount = Number(document.getElementById('wd-amount').value) || 0;
+  const address = document.getElementById('wd-address').value.trim();
 
-const amount=
-Number(document.getElementById('wd-amount').value);
+  if (amount <= 0) { window.alert('কত honey withdraw করবে সেটা দাও।'); return; }
+  if (amount > Number(state.user.balance || 0)) { window.alert('তোমার balance-এর চেয়ে বেশি withdraw করা যাবে না।'); return; }
+  if (!address) { window.alert('bKash number দাও।'); return; }
+  if (!/^01[3-9]\d{8}$/.test(address)) { window.alert('সঠিক bKash number দাও।'); return; }
 
-const address=
-document.getElementById('wd-address').value.trim();
+  const btn = document.querySelector('#screen-withdraw .submit-post-btn');
+  if (btn) { btn.disabled = true; btn.textContent = 'Submitting...'; }
 
-if(!amount||amount<=0){
-alert('কত honey withdraw করবে সেটা দাও।');
-return;
+  try {
+    const data = await api('submit_withdraw', { amountHoney: amount, bkashNumber: address });
+    if (data.user) { state.user.balance = data.user.balance; updateWalletUI(); }
+    window.alert('✅ Withdraw request জমা হয়েছে — ২৪ ঘণ্টার মধ্যে পাঠানো হবে।');
+    document.getElementById('wd-amount').value = '';
+    document.getElementById('wd-address').value = '';
+    updateWithdrawConvert();
+    showScreen('home');
+  } catch (e) {
+    window.alert(errorText(e));
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = 'Submit Withdraw Request'; }
+  }
 }
 
-if(amount>Number(state.user.balance||0)){
-alert('তোমার balance-এর চেয়ে বেশি withdraw করা যাবে না।');
-return;
-}
-
-if(!address){
-alert('bKash number দাও।');
-return;
-}
-
-if(!/^01[3-9]\d{8}$/.test(address)){
-alert('সঠিক bKash number দাও।');
-return;
-}
-
-const btn=
-document.querySelector('#screen-withdraw .submit-post-btn');
-
-if(btn){
-btn.disabled=true;
-btn.textContent='Submitting...';
-}
-
-try{
-
-const data=await api('withdraw_request',{
-amount:amount,
-address:address
-});
-
-alert(
-data.message||
-'✅ Withdraw request পাঠানো হয়েছে।'
-);
-
-document.getElementById('wd-amount').value='';
-document.getElementById('wd-address').value='';
-
-updateWithdrawConvert();
-
-await refreshState();
-
-showScreen('home');
-
-}catch(e){
-
-alert(errorText(e));
-
-}finally{
-
-if(btn){
-btn.disabled=false;
-btn.textContent='Submit Withdraw Request';
-}
-
-}
-}
-
+/* ============================================================
+   HISTORY
+   ============================================================ */
 async function loadHistory(){
+  const list = document.getElementById('txn-list');
+  if (!list) return;
+  list.innerHTML = '<div style="text-align:center;color:var(--text-muted);padding:30px 10px;font-size:12px;">Loading...</div>';
 
-const list=document.getElementById('txn-list');
-
-if(!list)return;
-
-list.innerHTML=
-'<div style="text-align:center;color:var(--text-muted);padding:30px 10px;font-size:12px;">Loading...</div>';
-
-try{
-
-const data=await api('history');
-
-const items=
-Array.isArray(data.history)
-?data.history
-:Array.isArray(data.transactions)
-?data.transactions
-:[];
-
-if(!items.length){
-
-list.innerHTML=
-'<div style="text-align:center;color:var(--text-muted);padding:30px 10px;font-size:12px;">No transaction history yet.</div>';
-
-return;
-}
-
-list.innerHTML=items.map(function(item){
-
-const amount=Number(item.amount||item.honey||0);
-
-const type=
-item.type||
-item.action||
-'Transaction';
-
-const status=
-item.status||
-'Pending';
-
-const date=
-item.created_at||
-item.date||
-'';
-
-const positive=
-amount>=0;
-
-return `
-<div class="task-card">
-<div class="task-hex">
-${positive?'↑':'↓'}
-</div>
-<div class="task-body">
-<div class="title">${esc(type)}</div>
-<div class="desc">${esc(date)} • ${esc(status)}</div>
-<div class="pts" style="color:${positive?'var(--sage)':'var(--coral)'}">
-${positive?'+':''}${money(amount)} honey
-</div>
-</div>
-</div>`;
-}).join('');
-
-}catch(e){
-
-list.innerHTML=
-'<div style="text-align:center;color:var(--text-muted);padding:30px 10px;font-size:12px;">History load করা যায়নি।</div>';
-
-console.error(e);
-
-}
-}
-
-document.addEventListener('click',function(e){
-
-const nav=e.target.closest('.navbtn');
-
-if(nav)return;
-
-});
-
-async function boot(){
-
-try{
-
-if(tg){
-tg.MainButton.hide();
-}
-
-await refreshState();
-
-}catch(e){
-
-console.error(e);
-
-}
-
-}
-
-const originalShowScreen=showScreen;
-
-showScreen=function(name){
-
-originalShowScreen(name);
-
-if(name==='history'){
-loadHistory();
-}
-
-if(name==='withdraw'){
-updateWalletUI();
-}
-
-if(name==='deposit'){
-updateDepositReceiverUI();
-updateDepositConvert();
-}
-
-};
-
-boot();
-/* Final UI helpers */
-function notify(message){
-  if(tg && typeof tg.showAlert==='function'){
-    tg.showAlert(String(message));
-  }else{
-    alert(String(message));
-  }
-}
-
-function safeOpen(url){
-  if(!url)return;
-  try{
-    if(tg && typeof tg.openLink==='function'){
-      tg.openLink(url);
-    }else{
-      window.open(url,'_blank');
+  try {
+    const data = await api('get_history');
+    const items = Array.isArray(data.history) ? data.history : [];
+    if (!items.length) {
+      list.innerHTML = '<div style="text-align:center;color:var(--text-muted);padding:30px 10px;font-size:12px;">No transaction history yet.</div>';
+      return;
     }
-  }catch(e){
-    window.open(url,'_blank');
+    list.innerHTML = items.map(function(item){
+      const amount = Number(item.amount || 0);
+      const positive = amount >= 0;
+      const date = item.created_at ? new Date(item.created_at).toLocaleString() : '';
+      return '<div class="task-card">' +
+        '<div class="task-hex">' + (positive ? '↑' : '↓') + '</div>' +
+        '<div class="task-body">' +
+          '<div class="title">' + esc(item.type) + '</div>' +
+          '<div class="desc">' + esc(date) + ' • ' + esc(item.status) + '</div>' +
+          '<div class="pts" style="color:' + (positive ? 'var(--sage)' : 'var(--coral)') + '">' +
+            (positive ? '+' : '') + money(amount) + ' honey' +
+          '</div>' +
+        '</div>' +
+      '</div>';
+    }).join('');
+  } catch (e) {
+    list.innerHTML = '<div style="text-align:center;color:var(--text-muted);padding:30px 10px;font-size:12px;">History load করা যায়নি।</div>';
+    console.error(e);
   }
 }
 
-/* Override normal alerts where possible */
-const _oldAlert=window.alert;
-window.alert=function(message){
-  if(tg && typeof tg.showAlert==='function'){
-    tg.showAlert(String(message));
-  }else{
-    _oldAlert(String(message));
+/* ============================================================
+   BOOT
+   ============================================================ */
+async function boot(){
+  try {
+    if (tg && tg.MainButton) tg.MainButton.hide();
+    await refreshState();
+  } catch (e) {
+    console.error(e);
   }
-};
-
-/* Keep wallet UI synced when page becomes visible again */
-document.addEventListener('visibilitychange',function(){
-  if(!document.hidden){
-    refreshState();
-  }
-});
-
-window.addEventListener('focus',function(){
-  refreshState();
-});
-
-/* Telegram theme */
-if(tg){
-  try{
-    tg.onEvent('themeChanged',function(){
-      document.documentElement.style.setProperty(
-        '--tg-bg',
-        tg.backgroundColor||''
-      );
-    });
-  }catch(e){}
 }
 
-/* Prevent accidental form submit */
-document.addEventListener('submit',function(e){
-  e.preventDefault();
+document.addEventListener('visibilitychange', function(){
+  if (!document.hidden) refreshState();
 });
 
-/* Initial screen */
 showScreen('home');
+boot();
 </script>
 </body>
 </html>
